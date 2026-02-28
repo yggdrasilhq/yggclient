@@ -1,0 +1,20 @@
+#!/data/data/com.termux/files/usr/bin/bash
+
+# Manual Obsidian sync via yggsync (Termux:Widget)
+
+CONFIG="${YGG_SYNC_CONFIG:-$HOME/.config/ygg_sync.toml}"
+YGG_BIN="${YGG_BIN:-$HOME/.local/bin/yggsync}"
+
+# Provide immediate feedback that the widget was tapped
+termux-toast "Starting yggsync: obsidian"
+
+# Run the obsidian job (same as hourly fast job)
+"$YGG_BIN" -config "$CONFIG" -jobs obsidian
+
+if [ $? -eq 0 ]; then
+  termux-toast "Obsidian sync done"
+else
+  termux-toast -b red -c white "Obsidian sync failed"
+fi
+
+exit 0

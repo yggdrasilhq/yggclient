@@ -1,0 +1,5 @@
+Types: deb
+URIs: https://releases.warp.dev/linux/deb/
+Suites: stable
+Components: main 
+Signed-By: /etc/apt/trusted.gpg.d/warpdotdev.gpg

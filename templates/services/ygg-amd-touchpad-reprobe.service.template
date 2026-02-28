@@ -1,0 +1,14 @@
+[Unit]
+Description=Yggdrasil reprobe AMD I2C HID touchpad (FTCS1000)
+After=systemd-modules-load.service
+Before=display-manager.service graphical.target
+ConditionPathExists=/sys/bus/acpi/devices/FTCS1000:00
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/bash -lc "${REPO_ROOT}/scripts/hardware/amd-touchpad-reprobe.sh"
+RemainAfterExit=yes
+User=root
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,13 @@
+[Unit]
+Description=Run lego-gourtop.service every three days to manage gour.top certificates
+Requires=lego-gourtop.service
+
+[Timer]
+# Run every 3 days
+OnUnitActiveSec=3d
+RandomizedDelaySec=12h  # Spread load on ACME servers (up to 12 hour delay)
+Persistent=true         # Run on next boot if a scheduled run was missed
+Unit=lego-gourtop.service # Ensure this matches the .service file name
+
+[Install]
+WantedBy=timers.target

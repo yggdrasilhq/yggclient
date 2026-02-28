@@ -1,0 +1,15 @@
+[Unit]
+Description=Yggdrasil start the default KVM libvirt network on boot
+After=network-online.target libvirtd.service
+Wants=network-online.target libvirtd.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/bash -lc "/usr/bin/virsh -c qemu:///system net-info default | /usr/bin/grep -q \"Active:\\s*yes\" || /usr/bin/virsh -c qemu:///system net-start default"
+ExecStartPost=/usr/bin/virsh -c qemu:///system net-autostart default
+ExecStartPost=/usr/bin/bash -lc "/usr/bin/tailscale set --exit-node-allow-lan-access=true >/dev/null 2>&1 || true"
+ExecStartPost=/usr/bin/bash -lc "/usr/sbin/ip rule del pref 5205 >/dev/null 2>&1 || true; /usr/bin/virsh -c qemu:///system net-info default | /usr/bin/awk -F': *' '/^Bridge:/ {print \$2; exit}' | /usr/bin/xargs -r -I{} /usr/sbin/ip -o -f inet addr show dev {} scope global | /usr/bin/awk '{print \$4; exit}' | /usr/bin/xargs -r -I% /usr/sbin/ip rule add pref 5205 from % lookup main >/dev/null 2>&1 || true"
+User=root
+
+[Install]
+WantedBy=multi-user.target

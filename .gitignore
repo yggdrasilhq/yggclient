@@ -1,0 +1,8 @@
+# Ignore built binaries for Android helper tools
+android/bin/yggsync
+
+# Local private profile
+config/profiles.local.env
+
+# editor/system
+.DS_Store

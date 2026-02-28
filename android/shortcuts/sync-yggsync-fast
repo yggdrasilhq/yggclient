@@ -1,0 +1,14 @@
+#!/data/data/com.termux/files/usr/bin/bash
+
+# Manual trigger for yggsync fast job (obsidian)
+CONFIG="${YGG_SYNC_CONFIG:-$HOME/.config/ygg_sync.toml}"
+YGG_BIN="${YGG_BIN:-$HOME/.local/bin/yggsync}"
+
+termux-toast "yggsync fast: obsidian"
+"$YGG_BIN" -config "$CONFIG" -jobs obsidian
+status=$?
+if [ $status -eq 0 ]; then
+  termux-toast "yggsync fast done"
+else
+  termux-toast -b red -c white "yggsync fast failed ($status)"
+fi

@@ -1,0 +1,16 @@
+[Unit]
+Description=Yggdrasil ZFS shift snapshot prune
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=/etc/default/ygg-shift-sync
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+EnvironmentFile=-/etc/default/ygg-shift-sync
+EnvironmentFile=-/etc/default/ygg-shift-prune
+ExecStart=/usr/bin/flock -n /run/ygg-shift-sync.lock ${REPO_ROOT}/scripts/zfs/shift-prune.sh
+
+[Install]
+WantedBy=multi-user.target

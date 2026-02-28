@@ -1,0 +1,12 @@
+[Unit]
+Description=Update Zed Editor via install script
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c "/usr/bin/curl -fsSL https://zed.dev/install.sh | /bin/sh"
+SuccessExitStatus=0
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,5 @@
+Types: deb
+URIs: https://download.owncloud.com/desktop/ownCloud/stable/latest/linux/Debian_12/
+Suites: /
+Components: 
+Signed-By: /etc/apt/keyring/owncloud-client.gpg

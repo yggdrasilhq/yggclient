@@ -1,0 +1,75 @@
+[Unit]
+Description=Lego ACME client for gour.top (Porkbun DNS)
+Documentation=man:lego(1) https://go-acme.github.io/lego/
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/etc/letsencrypt/gour.top/lego/run.sh
+StandardOutput=journal+console
+StandardError=journal+console
+
+# If you move API keys to an EnvironmentFile (recommended):
+# 1. Create /etc/lego/porkbun.env with:
+#    PORKBUN_SECRET_API_KEY=sk1_...
+#    PORKBUN_API_KEY=pk1_...
+# 2. Secure it: chmod 0600 /etc/lego/porkbun.env && chown root:root /etc/lego/porkbun.env
+# 3. Uncomment the line below and REMOVE the export lines from manage-gourtop-certs.sh
+# EnvironmentFile=/etc/lego/porkbun.env
+
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target
+[Unit]
+Description=Lego ACME client for gour.top (Porkbun DNS)
+Documentation=man:lego(1) https://go-acme.github.io/lego/
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/etc/letsencrypt/gour.top/lego/run.sh
+StandardOutput=journal+console
+StandardError=journal+console
+
+# If you move API keys to an EnvironmentFile (recommended):
+# 1. Create /etc/lego/porkbun.env with:
+#    PORKBUN_SECRET_API_KEY=sk1_...
+#    PORKBUN_API_KEY=pk1_...
+# 2. Secure it: chmod 0600 /etc/lego/porkbun.env && chown root:root /etc/lego/porkbun.env
+# 3. Uncomment the line below and REMOVE the export lines from manage-gourtop-certs.sh
+# EnvironmentFile=/etc/lego/porkbun.env
+
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target
+[Unit]
+Description=Lego ACME client for gour.top (Porkbun DNS)
+Documentation=man:lego(1) https://go-acme.github.io/lego/
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/etc/letsencrypt/gour.top/lego/run.sh
+StandardOutput=journal+console
+StandardError=journal+console
+
+# If you move API keys to an EnvironmentFile (recommended):
+# 1. Create /etc/lego/porkbun.env with:
+#    PORKBUN_SECRET_API_KEY=sk1_...
+#    PORKBUN_API_KEY=pk1_...
+# 2. Secure it: chmod 0600 /etc/lego/porkbun.env && chown root:root /etc/lego/porkbun.env
+# 3. Uncomment the line below and REMOVE the export lines from manage-gourtop-certs.sh
+# EnvironmentFile=/etc/lego/porkbun.env
+
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target

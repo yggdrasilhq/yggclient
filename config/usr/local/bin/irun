@@ -1,0 +1,104 @@
+#!/bin/bash
+
+# irun v8: The Definitive Self-Healing and Self-Aware Wrapper
+#
+# FEATURES:
+# 1. Periodic auto-update capability (checks hourly).
+# 2. Correctly handles variable scope by avoiding the "subshell trap".
+# 3. Generic, automatic dynamic secret selection using the user's convention.
+# 4. Zero-config defaults using environment variables.
+
+set -e
+
+# --- Configuration ---
+UPDATE_URL="https://git.example/yggdrasilhq/ygg-client/raw/main/config/usr/local/bin/irun"
+UPDATE_CHECK_FILE="/tmp/irun.last_update_check"
+UPDATE_TTL=3600 # 1 hour
+
+# --- Self-Update Function ---
+self_update() {
+  echo "irun: Checking for updates..." >&2
+
+  if ! curl -f -sS -L -o "/tmp/irun.new" "$UPDATE_URL"; then
+    echo "irun update: Could not download new version. Continuing with old version." >&2
+    # Touch the file anyway to prevent trying again for an hour
+    touch "$UPDATE_CHECK_FILE"
+    return
+  fi
+
+  if cmp -s "/tmp/irun.new" "$0"; then
+    echo "irun update: Already up to date." >&2
+  else
+    echo "irun update: New version found. Installing..." >&2
+    chmod +x "/tmp/irun.new" && mv "/tmp/irun.new" "$0"
+    echo "irun update: Update complete. Please run your command again to use the new version." >&2
+    exit 0 # Exit so the user can re-run with the new script
+  fi
+
+  rm -f "/tmp/irun.new"
+  touch "$UPDATE_CHECK_FILE"
+}
+
+# --- 1. Periodic Auto-Update Logic ---
+# If called with --update, force it. Otherwise, check based on TTL.
+if [[ "$1" == "--update" ]]; then
+  self_update
+fi
+
+if ! [ -f "$UPDATE_CHECK_FILE" ] || ! [ "$(($(date +%s) - $(stat -c %Y "$UPDATE_CHECK_FILE")))" -gt "$UPDATE_TTL" ]; then
+  # This triggers the update check once per hour
+  self_update
+fi
+
+# --- 2. Argument Parsing ---
+infisical_flags=()
+app_command=()
+# (We already handled --update, so no need to parse it again)
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --) shift; app_command=("$@"); break ;;
+    *) infisical_flags+=("$1"); shift ;;
+  esac
+done
+
+# --- 3. Safety Checks & Zero-Config Defaults ---
+# ... (This section remains the same as v7) ...
+if [[ ${#app_command[@]} -eq 0 ]]; then
+  echo "irun Error: No application command provided after '--'." >&2; exit 1
+fi
+if ! [[ " ${infisical_flags[@]} " =~ " --token " ]] && [ -n "$INFISICAL_TOKEN" ]; then
+  infisical_flags+=(--token "$INFISICAL_TOKEN")
+elif ! [[ " ${infisical_flags[@]} " =~ " --token " ]]; then
+  echo "irun Error: INFISICAL_TOKEN not set and --token flag not provided." >&2; exit 1
+fi
+if ! [[ " ${infisical_flags[@]} " =~ " --projectId " ]] && [ -n "$INFISICAL_PROJECT_ID" ]; then
+  infisical_flags+=(--projectId "$INFISICAL_PROJECT_ID")
+elif ! [[ " ${infisical_flags[@]} " =~ " --projectId " ]]; then
+  echo "irun Error: INFISICAL_PROJECT_ID not set and --projectId flag was not provided." >&2; exit 1
+fi
+
+# --- 4. Construct the Generic Dynamic Logic (CORRECTED) ---
+# This engine now uses process substitution to avoid the subshell trap.
+selector_logic=$(cat <<'EOF'
+# This logic is executed by the child bash shell after secrets are injected.
+# The 'while' loop runs in the current shell, so 'export' works as expected.
+while IFS='=' read -r selector_var_name selector_var_value; do
+
+  if [[ -v $selector_var_value ]]; then
+    final_var_name="${selector_var_name#ACTIVE_}"
+    echo "irun: Dynamically setting '$final_var_name'..." >&2
+    export "$final_var_name"="${!selector_var_value}"
+  fi
+
+done < <(printenv | grep '^ACTIVE_')
+EOF
+)
+
+# --- 5. Build and Execute the Final Command Chain ---
+final_shell_command="$selector_logic ; exec \"\${@}\""
+
+echo "irun: Injecting secrets..." >&2
+echo "irun: Executing command -> [ ${app_command[@]} ]" >&2
+echo "-------------------------------------------------------------" >&2
+
+exec infisical run "${infisical_flags[@]}" -- bash -c "$final_shell_command" "irun-child" "${app_command[@]}"

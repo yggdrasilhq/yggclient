@@ -1,0 +1,17 @@
+[Unit]
+Description=Yggdrasil AutoSSH Sessions Manager
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/sh ${REPO_ROOT}/scripts/autossh-sessions.sh
+Restart=always
+RestartSec=30
+
+# Environment setup
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=%h/.Xauthority
+
+[Install]
+WantedBy=default.target

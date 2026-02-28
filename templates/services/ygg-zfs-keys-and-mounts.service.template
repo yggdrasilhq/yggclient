@@ -1,0 +1,17 @@
+[Unit]
+Description=Yggdrasil ensure ZFS keys loaded and datasets mounted
+DefaultDependencies=no
+After=local-fs-pre.target zfs-import.target zfs-load-module.service
+Before=local-fs.target display-manager.service
+ConditionPathIsDirectory=/sys/module/zfs
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+ExecStart=/usr/sbin/zfs load-key -a
+ExecStart=/usr/sbin/zfs mount -a
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

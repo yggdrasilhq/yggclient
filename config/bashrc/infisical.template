@@ -1,0 +1,33 @@
+#!/bin/bash
+
+export INFISICAL_PROJECT_ID=41226d9b-97ee-4e50-951d-4f0b4de26c09
+export INFISICAL_TOKEN=st.3cfc1679-6ac1-4acc-9be9-3ea478d9f473.9656021e26ec16170428ed489b04692e.eff10a3f82f2c98bcb56aaa866e0a79b
+export INFISICAL_API_URL=https://secrets.example
+
+# ---- Load Secrets from Infisical (with Caching & The Generic 'iexport' Tool) ----
+#
+# This is the definitive setup for an interactive shell. It uses our
+# self-built 'iexport' utility and a local cache for instant startup.
+
+# 1. Define the location for our local secret cache file.
+INFISICAL_CACHE_FILE="$HOME/.infisical_secrets"
+
+# 2. Define how long the cache should be valid (in seconds). 3600 = 1 hour.
+CACHE_TTL=3600
+
+# 3. Check if the cache file exists and is not too old.
+if [ -f "$INFISICAL_CACHE_FILE" ] && [ "$(($(date +%s) - $(stat -c %Y "$INFISICAL_CACHE_FILE")))" -lt "$CACHE_TTL" ]; then
+  # --- FAST PATH ---
+  # Cache is valid. Load secrets directly from the local file.
+  source "$INFISICAL_CACHE_FILE"
+else
+  # --- SLOW PATH ---
+  # Cache is old or missing. Call our powerful 'iexport' tool to regenerate it.
+  #echo "Refreshing secrets from Infisical..." >&2 # Message to stderr
+  
+  # 'iexport' produces the perfect 'export KEY=VALUE' output for our cache file.
+  iexport > "$INFISICAL_CACHE_FILE"
+  
+  # Load the secrets from the newly created cache file.
+  source "$INFISICAL_CACHE_FILE"
+fi

@@ -1,0 +1,18 @@
+#!/data/data/com.termux/files/usr/bin/bash
+
+# Manual Obsidian sync (same as fast job) via yggsync
+# Note: yggsync handles edge cases; no explicit --resync needed.
+
+CONFIG="${YGG_SYNC_CONFIG:-$HOME/.config/ygg_sync.toml}"
+YGG_BIN="${YGG_BIN:-$HOME/.local/bin/yggsync}"
+
+termux-toast "Starting yggsync: obsidian"
+"$YGG_BIN" -config "$CONFIG" -jobs obsidian
+
+if [ $? -eq 0 ]; then
+  termux-toast "Obsidian sync done"
+else
+  termux-toast -b red -c white "Obsidian sync failed"
+fi
+
+exit 0

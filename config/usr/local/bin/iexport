@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# iexport: A tool for interactive shells.
+# It fetches secrets from Infisical, performs generic dynamic selection,
+# and prints the final, complete set of 'export' commands to standard output,
+# ready to be consumed by `eval`.
+
+set -e
+
+# --- Safety Checks ---
+# This script relies on the standard environment variables being set,
+# typically in the calling shell's .bashrc or the LXC config.
+if [ -z "$INFISICAL_TOKEN" ]; then
+  echo "iexport Error: INFISICAL_TOKEN environment variable is not set." >&2; exit 1;
+fi
+if [ -z "$INFISICAL_PROJECT_ID" ]; then
+  echo "iexport Error: INFISICAL_PROJECT_ID environment variable is not set." >&2; exit 1;
+fi
+if [ -z "$INFISICAL_API_URL" ]; then
+  echo "iexport Error: INFISICAL_API_URL environment variable is not set." >&2; exit 1;
+fi
+
+# --- 1. Fetch all raw secrets from Infisical ---
+# We use the 'dotenv' format and pipe it through 'sed' to immediately
+# prepend the 'export' keyword. The result is stored in a variable.
+SECRETS=$(infisical export --format=dotenv --token="$INFISICAL_TOKEN" --projectId="$INFISICAL_PROJECT_ID" | sed 's/^/export /')
+
+# --- 2. Load these secrets into the current script's environment ---
+# This 'eval' is crucial. It makes the variables like ACTIVE_GEMINI_API_KEY
+# available for the next step's logic inside this script.
+eval "$SECRETS"
+
+# --- 3. Print the original, raw secrets to the output ---
+# The calling shell needs these for the dynamic selection to work.
+echo "$SECRETS"
+
+# --- 4. Perform Generic Dynamic Selection ---
+# This is the same powerful, generic engine from 'irun'.
+# It finds all ACTIVE_* variables and prints the final 'export ...' commands.
+# We use process substitution to avoid the subshell trap.
+while IFS='=' read -r selector_var_name selector_var_value; do
+  
+  # Ensure the value of the selector is a real, defined variable.
+  if [[ -v $selector_var_value ]]; then
+    # Derive the final variable name by stripping "ACTIVE_".
+    final_var_name="${selector_var_name#ACTIVE_}"
+    
+    # Perform the indirect expansion to get the final value.
+    final_value="${!selector_var_value}"
+    
+    # Print the final, complete export command for the calling shell.
+    echo "export $final_var_name='$final_value'"
+  fi
+
+done < <(printenv | grep '^ACTIVE_')

@@ -1,0 +1,6 @@
+# Generated from Termux config; adjust host/user/pass.
+[smb0]
+type = smb
+host = ${RCLONE_SMB_HOST:-192.168.0.213}
+user = ${RCLONE_SMB_USER:-datauser}
+pass = ${RCLONE_SMB_PASS:-33RL051XnLA0OMsB-06iwmjZXboL-CXd5w}

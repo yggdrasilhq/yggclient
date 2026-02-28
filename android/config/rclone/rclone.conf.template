@@ -1,0 +1,7 @@
+# Generated from device Termux config for convenience; update host/IP/user as needed.
+[smb0]
+type = smb
+host = 192.168.0.213
+user = datauser
+pass = 5UN82P0TVOqhP1XIIPWL4VZl_LFqAmQseg
+# Path is set by scripts (REMOTE_PATH=data/obsidian)

@@ -1,0 +1,5 @@
+Types: deb
+URIs: https://developer.download.nvidia.com/compute/cuda/repos/debian12/x86_64/
+Suites: /
+Components: 
+Signed-By: /etc/apt/keyring/cuda-archive-keyring.gpg

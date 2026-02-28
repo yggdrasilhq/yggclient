@@ -1,0 +1,30 @@
+# Get the directory of this script.
+# BASH_SOURCE[0] is the path to the script being executed.
+# readlink -f gets the absolute path.
+# dirname gets the directory part of the path.
+SCRIPT_DIR=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")
+
+# Add the usr/local/bin directory to the PATH
+BIN_DIR="$SCRIPT_DIR/../usr/local/bin"
+
+# Add to PATH if it's not already there to avoid duplicates.
+if [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
+  export PATH="$BIN_DIR:$PATH"
+fi
+
+# Source all other .template files in this directory
+for f in "$SCRIPT_DIR"/*.template; do
+  # Ensure the file is a regular file and readable
+  # and avoid sourcing the index file itself to prevent infinite loops.
+  if [ -f "$f" ] && [ -r "$f" ] && [ "$f" != "${BASH_SOURCE[0]}" ]; then
+    source "$f"
+  fi
+done
+
+# Clean up variables to avoid polluting the shell environment
+unset SCRIPT_DIR
+unset BIN_DIR
+unset f
+
+# Go to HOME DIR
+cd ${HOME}

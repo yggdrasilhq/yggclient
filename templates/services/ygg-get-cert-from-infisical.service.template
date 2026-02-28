@@ -1,0 +1,21 @@
+[Unit]
+Description=Renew SSL certificate for gour.top via Infisical
+After=network.target nss-lookup.target
+
+[Service]
+Type=oneshot
+User=root
+
+Environment=INFISICAL_INFRA_PROJECT_ID=4c2dc52c-910a-4f84-b71e-fd2835693494
+Environment=INFISICAL_INFRA_TOKEN=st.f096fc4f-9808-4c9d-8c9f-9df7a219f2c7.b9d35f14eb533b0c9011f64683b47808.bdd86147ead963fc4c58ef2b58b138c4
+Environment=INFISICAL_API_URL=https://secrets.example
+
+# Set the working directory to where the script is located
+WorkingDirectory=/opt/stalwart
+
+# Define the command and its arguments
+# Note how the final argument with spaces is quoted
+ExecStart=${REPO_ROOT}/scripts/get-cert-from-infisical.sh gour.top /etc/certs/gour.top.key /etc/certs/gour.top.fullchain.pem "echo "
+
+[Install]
+WantedBy=timers.target

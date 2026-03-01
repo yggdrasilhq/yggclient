@@ -16,7 +16,7 @@ This repository contains portable client-side assets for Linux and Android endpo
 
 ## Public/Private Separation
 
-`yggclient` replaces the private predecessor `git/ygg_client` as the active upstream.
+`yggclient` replaces the private predecessor repository as the active upstream.
 
 To keep this repository public-safe:
 - keep infrastructure-specific values in `config/profiles.local.env` (gitignored)

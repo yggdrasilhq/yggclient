@@ -12,6 +12,20 @@ if [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
   export PATH="$BIN_DIR:$PATH"
 fi
 
+# Load profile variables (public example first, local overrides second).
+PROFILE_EXAMPLE="$SCRIPT_DIR/../profiles.example.env"
+PROFILE_LOCAL="$SCRIPT_DIR/../profiles.local.env"
+if [ -f "$PROFILE_EXAMPLE" ] && [ -r "$PROFILE_EXAMPLE" ]; then
+  set -a
+  source "$PROFILE_EXAMPLE"
+  set +a
+fi
+if [ -f "$PROFILE_LOCAL" ] && [ -r "$PROFILE_LOCAL" ]; then
+  set -a
+  source "$PROFILE_LOCAL"
+  set +a
+fi
+
 # Source all other .template files in this directory
 for f in "$SCRIPT_DIR"/*.template; do
   # Ensure the file is a regular file and readable
@@ -24,6 +38,8 @@ done
 # Clean up variables to avoid polluting the shell environment
 unset SCRIPT_DIR
 unset BIN_DIR
+unset PROFILE_EXAMPLE
+unset PROFILE_LOCAL
 unset f
 
 # Go to HOME DIR

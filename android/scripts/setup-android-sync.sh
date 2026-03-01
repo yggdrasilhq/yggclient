@@ -3,8 +3,12 @@
 echo "Starting Yggdrasil Client Android Sync Setup..."
 
 # --- Variables ---
-# IMPORTANT: Adjust this if you clone the repo elsewhere
-YGG_CLIENT_DIR="$HOME/git/ygg_client"
+SCRIPT_DIR_SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+YGG_CLIENT_DIR_DEFAULT="$(cd "$SCRIPT_DIR_SELF/../.." && pwd)"
+YGG_CLIENT_DIR="${YGG_CLIENT_DIR:-$YGG_CLIENT_DIR_DEFAULT}"
+if [ ! -d "$YGG_CLIENT_DIR" ] && [ -d "$HOME/git/ygg_client" ]; then
+    YGG_CLIENT_DIR="$HOME/git/ygg_client"
+fi
 BOOT_SCRIPT_DIR="$HOME/.termux/boot"
 BOOT_SCRIPT_NAME="ygg-start-sync-jobs"
 BOOT_SCRIPT_PATH="$BOOT_SCRIPT_DIR/$BOOT_SCRIPT_NAME"

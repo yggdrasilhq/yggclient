@@ -7,10 +7,10 @@ This directory contains scripts and configuration for setting up background sync
 1.  **Termux:** Installed from F-Droid or GitHub (recommended).
 2.  **Termux:API App:** Installed from F-Droid or GitHub.
 3.  **Termux:Boot App:** Installed from F-Droid or GitHub.
-4.  **Clone Repository:** Ensure this `ygg_client` repository is cloned into your Termux home directory (e.g., `~/git/ygg_client`). The scripts assume this location by default.
+4.  **Clone Repository:** Ensure this `yggclient` repository is cloned into your Termux home directory (for example `~/gh/yggclient`). Scripts auto-detect their own repo root and also support `YGG_CLIENT_DIR`.
 5.  **Termux Packages & Storage:** Run the bootstrap script located within the `android/scripts` directory *after* cloning:
     ```bash
-    cd ~/git/ygg_client # Or wherever you cloned it
+    cd ~/gh/yggclient # Or wherever you cloned it
     bash android/scripts/bootstrap.sh
     ```
     This installs `termux-api`, `rclone`, `git`, `openssh`, and other utilities. It also runs `termux-setup-storage`. You *must* accept the storage permission request from Android when it pops up.
@@ -20,7 +20,7 @@ This directory contains scripts and configuration for setting up background sync
 
 1.  **Run Bootstrap:** If you haven't already, run the bootstrap script:
     ```bash
-    cd ~/git/ygg_client
+    cd ~/gh/yggclient
     bash android/scripts/bootstrap.sh
     ```
     Follow any prompts (especially for `rclone config` if needed). Grant storage permissions when asked by Android.
@@ -60,7 +60,7 @@ This directory contains scripts and configuration for setting up background sync
 
 1.  Pull changes from your Git repository:
     ```bash
-    cd ~/git/ygg_client
+    cd ~/gh/yggclient
     git pull
     ```
 2.  Make the potentially updated scripts executable:
@@ -83,6 +83,6 @@ This directory contains scripts and configuration for setting up background sync
 *   **Permissions:** Ensure Termux still has storage permission (`ls ~/storage/shared/Documents`). Re-run `termux-setup-storage` if needed.
 *   **API Commands:** Test API commands manually (e.g., `termux-wifi-connectioninfo`, `termux-toast "Test"`). If they fail, ensure the Termux:API app is running and hasn't been killed by the system.
 *   **`rclone` Config:** Test the remote connection manually: `rclone lsd NAS_Obsidian:pi/obsidian --config ~/.config/rclone/rclone.conf`
-*   **Manual Sync:** Run the sync script directly to see errors: `bash ~/git/ygg_client/android/scripts/sync-obsidian.sh`
-*   **Manual Job Scheduling:** Run the boot script manually: `bash ~/git/ygg_client/android/scripts/termux-boot-sync-jobs.sh`
+*   **Manual Sync:** Run the sync script directly to see errors: `bash ~/gh/yggclient/android/scripts/sync-obsidian.sh`
+*   **Manual Job Scheduling:** Run the boot script manually: `bash ~/gh/yggclient/android/scripts/termux-boot-sync-jobs.sh`
 *   **Stale Lock:** Check `sync-obsidian.log` for messages about stale locks or skipping due to existing locks. Manually remove the lock directory if necessary: `rmdir ~/.local/state/ygg_client/sync-obsidian.lock`

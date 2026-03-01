@@ -1,23 +1,36 @@
-# ygg-client
+# yggclient
 
-Client-side tooling for Yggdrasil systems (desktop/laptop endpoints, sync helpers, local automation).
+Public upstream for Yggdrasil endpoint automation.
 
-## Repository Policy
+This repository contains portable client-side assets for Linux and Android endpoints:
+- sync tooling
+- systemd service/timer templates
+- endpoint install helpers
+- workstation utility scripts
 
-- This is the public source of truth for client scripts/templates.
-- Private predecessor: `git/ygg_client` (deprecated for active feature work).
+## Scope and Boundaries
 
-## Documentation
+- `yggclient`: executable scripts/templates and minimal operational notes.
+- `yggdrasil`: build/ISO logic.
+- `ygg-docs`: user/developer documentation.
 
-All documentation is centralized in `ygg-docs`.
+## Public/Private Separation
+
+`yggclient` replaces the private predecessor `git/ygg_client` as the active upstream.
+
+To keep this repository public-safe:
+- keep infrastructure-specific values in `config/profiles.local.env` (gitignored)
+- keep `config/profiles.example.env` generalized
+- do not commit private hosts, domains, or tokens
 
 ## Local Profiles
 
-- tracked template: `config/profiles.example.env`
-- local file: `config/profiles.local.env` (gitignored)
-
-`profiles.local.env` is intended to reproduce private legacy infrastructure behavior
-without committing private host/domain details to the public tree.
+1. Copy the example profile:
+   ```bash
+   cp config/profiles.example.env config/profiles.local.env
+   ```
+2. Set private values in `config/profiles.local.env`.
+3. Source `config/bashrc/index.template` from your shell startup.
 
 ## License
 

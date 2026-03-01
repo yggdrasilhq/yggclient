@@ -11,7 +11,7 @@
 set -e
 
 # --- Configuration ---
-UPDATE_URL="https://git.example/yggdrasilhq/ygg-client/raw/main/config/usr/local/bin/irun"
+UPDATE_URL="https://git.example/yggdrasilhq/yggclient/raw/main/config/usr/local/bin/irun"
 UPDATE_CHECK_FILE="/tmp/irun.last_update_check"
 UPDATE_TTL=3600 # 1 hour
 
@@ -45,7 +45,7 @@ if [[ "$1" == "--update" ]]; then
   self_update
 fi
 
-if ! [ -f "$UPDATE_CHECK_FILE" ] || ! [ "$(($(date +%s) - $(stat -c %Y "$UPDATE_CHECK_FILE")))" -gt "$UPDATE_TTL" ]; then
+if ! [ -f "$UPDATE_CHECK_FILE" ] || [ "$(($(date +%s) - $(stat -c %Y "$UPDATE_CHECK_FILE")))" -gt "$UPDATE_TTL" ]; then
   # This triggers the update check once per hour
   self_update
 fi

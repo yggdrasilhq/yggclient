@@ -1,7 +1,12 @@
 #!/data/data/com.termux/files/usr/bin/bash
 set -euo pipefail
 
-YGG_DIR="$HOME/git/ygg_client"
+SCRIPT_DIR_SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+YGG_DIR_DEFAULT="$(cd "$SCRIPT_DIR_SELF/../.." && pwd)"
+YGG_DIR="${YGG_CLIENT_DIR:-$YGG_DIR_DEFAULT}"
+if [ ! -d "$YGG_DIR" ] && [ -d "$HOME/git/ygg_client" ]; then
+  YGG_DIR="$HOME/git/ygg_client"
+fi
 BOOT_SCRIPT_DIR="$HOME/.termux/boot"
 STATE_DIR="$HOME/.local/state/ygg_client"
 RCLONE_CONFIG="$HOME/.config/rclone/rclone.conf"

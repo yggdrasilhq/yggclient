@@ -3,9 +3,13 @@
 # This script is intended to be run by Termux:Boot
 # It re-registers the periodic sync job(s) using termux-job-scheduler.
 
-# Location of the main ygg_client repository
-# IMPORTANT: Adjust this if you clone the repo elsewhere
-YGG_CLIENT_DIR="$HOME/git/ygg_client"
+# Location of the main yggclient repository.
+SCRIPT_DIR_SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+YGG_CLIENT_DIR_DEFAULT="$(cd "$SCRIPT_DIR_SELF/../.." && pwd)"
+YGG_CLIENT_DIR="${YGG_CLIENT_DIR:-$YGG_CLIENT_DIR_DEFAULT}"
+if [ ! -d "$YGG_CLIENT_DIR" ] && [ -d "$HOME/git/ygg_client" ]; then
+  YGG_CLIENT_DIR="$HOME/git/ygg_client"
+fi
 
 # Log file for boot script actions
 BOOT_LOG="$HOME/.local/state/ygg_client/termux-boot.log"

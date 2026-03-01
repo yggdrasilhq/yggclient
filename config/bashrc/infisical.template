@@ -1,8 +1,14 @@
 #!/bin/bash
 
-export INFISICAL_PROJECT_ID=41226d9b-97ee-4e50-951d-4f0b4de26c09
-export INFISICAL_TOKEN=st.3cfc1679-6ac1-4acc-9be9-3ea478d9f473.9656021e26ec16170428ed489b04692e.eff10a3f82f2c98bcb56aaa866e0a79b
-export INFISICAL_API_URL=https://secrets.example
+# Private values should come from config/profiles.local.env (gitignored),
+# or be pre-exported in the shell environment.
+if [ -z "${INFISICAL_API_URL:-}" ] && [ -n "${SECRETS_API_URL:-}" ]; then
+  export INFISICAL_API_URL="$SECRETS_API_URL"
+fi
+
+if [ -z "${INFISICAL_PROJECT_ID:-}" ] || [ -z "${INFISICAL_TOKEN:-}" ] || [ -z "${INFISICAL_API_URL:-}" ]; then
+  return 0
+fi
 
 # ---- Load Secrets from Infisical (with Caching & The Generic 'iexport' Tool) ----
 #

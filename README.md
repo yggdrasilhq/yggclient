@@ -2,35 +2,50 @@
 
 Public upstream for Yggdrasil endpoint automation.
 
-This repository contains portable client-side assets for Linux and Android endpoints:
+This repository is the portable client layer for Linux and Android endpoints in the Yggdrasil ecosystem:
 - sync tooling
 - systemd service/timer templates
 - endpoint install helpers
 - workstation utility scripts
 
-## Scope and Boundaries
+## Scope
 
-- `yggclient`: executable scripts/templates and minimal operational notes.
+- `yggclient`: executable assets and minimal operational notes only.
 - `yggdrasil`: build/ISO logic.
 - `ygg-docs`: user/developer documentation.
 
 ## Public/Private Separation
 
-`yggclient` replaces the private predecessor repository as the active upstream.
+This repository replaces the private predecessor (`ygg_client`) as the active upstream.
 
-To keep this repository public-safe:
-- keep infrastructure-specific values in `config/profiles.local.env` (gitignored)
-- keep `config/profiles.example.env` generalized
-- do not commit private hosts, domains, or tokens
+Design rule:
+- generalized defaults stay in versioned files
+- private infrastructure values stay local and unversioned
 
-## Local Profiles
+Use:
+- `config/profiles.example.env` for shareable defaults
+- `config/profiles.local.env` for machine/user secrets and private endpoints (gitignored)
 
-1. Copy the example profile:
+Never commit private hosts, tokens, or environment-specific secrets.
+
+## Local Setup
+
+1. Create your local profile:
    ```bash
    cp config/profiles.example.env config/profiles.local.env
    ```
 2. Set private values in `config/profiles.local.env`.
-3. Source `config/bashrc/index.template` from your shell startup.
+3. Source the shell integration from your startup file:
+   ```bash
+   source "$HOME/git/yggclient/config/bashrc/index.template"
+   ```
+
+## Migration From `ygg_client`
+
+1. Switch shell sourcing from `~/git/ygg_client` to `~/git/yggclient`.
+2. Move private Infisical/profile values into `config/profiles.local.env`.
+3. Reinstall currently used `ygg-*` units from templates in this repo so installed unit files reference the new repository path.
+4. Verify no active unit file references `~/git/ygg_client`.
 
 ## License
 

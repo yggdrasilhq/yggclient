@@ -60,7 +60,7 @@ if [ -x "$ANDROID_BIN" ]; then
   log "Installing yggsync binary..."
   install -m 0755 "$ANDROID_BIN" "$LOCAL_BIN/yggsync"
 else
-  log "yggsync binary not found at $ANDROID_BIN; run android/scripts/fetch-yggsync.sh to download from release or build from ~/git/yggsync."
+  log "yggsync binary not found at $ANDROID_BIN; run android/scripts/fetch-yggsync.sh to download from release or build from ~/gh/yggsync."
 fi
 
 log "Installing Termux:Boot script..."

@@ -3,7 +3,7 @@ set -euo pipefail
 
 VERSION="${1:-v0.1.3}"
 OUT="${OUT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/bin/yggsync}"
-URL="https://git.example/yggdrasil/yggsync/releases/download/${VERSION}/yggsync-android-arm64"
+URL="https://g.gour.top/yggdrasilhq/yggsync/releases/download/${VERSION}/yggsync-android-arm64"
 
 log(){ printf "[%s] %s\n" "$(date '+%Y-%m-%d %H:%M:%S')" "$*"; }
 

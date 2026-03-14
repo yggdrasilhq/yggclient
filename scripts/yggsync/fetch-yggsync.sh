@@ -6,7 +6,8 @@ ARCH="${ARCH:-amd64}"
 OS="${OS:-linux}"
 OUT="${OUT:-${HOME}/.local/bin/yggsync}"
 SRC_DIR="${SRC_DIR:-${HOME}/gh/yggsync}"
-URL="https://github.com/yggdrasilhq/yggsync/releases/download/${VERSION}/yggsync-${OS}-${ARCH}"
+YGGSYNC_REPO="${YGGSYNC_REPO:-https://github.com/yggdrasilhq/yggsync}"
+URL="${YGGSYNC_REPO%/}/releases/download/${VERSION}/yggsync-${OS}-${ARCH}"
 ALLOW_BUILD_FALLBACK="${ALLOW_BUILD_FALLBACK:-0}"
 
 log() { printf "[%s] %s\n" "$(date '+%Y-%m-%d %H:%M:%S')" "$*"; }
@@ -41,5 +42,5 @@ if [[ "$ALLOW_BUILD_FALLBACK" -eq 1 ]]; then
   exit 1
 fi
 
-echo "Release asset yggsync-${OS}-${ARCH} not found for tag ${VERSION}. Publish a release to github.com/yggdrasilhq/yggsync or set ALLOW_BUILD_FALLBACK=1 on a build host." >&2
+echo "Release asset yggsync-${OS}-${ARCH} not found for tag ${VERSION}. Publish a release to ${YGGSYNC_REPO} or set ALLOW_BUILD_FALLBACK=1 on a build host." >&2
 exit 1

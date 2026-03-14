@@ -13,8 +13,16 @@ BOOT_LOG="$HOME/.local/state/ygg_client/termux-boot.log"
 mkdir -p "$(dirname "$BOOT_LOG")"
 echo "$(date '+%Y-%m-%d %H:%M:%S') - Termux:Boot script started." >> "$BOOT_LOG"
 
+AUTO_UPDATE="${YGG_AUTO_UPDATE:-1}"
+UPDATE_SCRIPT="$YGG_CLIENT_DIR/android/scripts/update-public-stack.sh"
+
 # Wait a bit for network connectivity and Termux API to potentially establish
 sleep 30
+
+if [[ "$AUTO_UPDATE" == "1" && -x "$UPDATE_SCRIPT" ]]; then
+  echo "$(date '+%Y-%m-%d %H:%M:%S') - Running auto-update step..." >> "$BOOT_LOG"
+  bash "$UPDATE_SCRIPT" || echo "$(date '+%Y-%m-%d %H:%M:%S') - Auto-update step failed." >> "$BOOT_LOG"
+fi
 
 # --- Fast job (obsidian-only via yggsync) ---
 JOB_ID_FAST=101

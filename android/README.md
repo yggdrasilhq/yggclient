@@ -49,6 +49,7 @@ This directory contains scripts and configuration for setting up background sync
 *   **`yggsync`:** The sync engine. It reads `~/.config/ygg_sync.toml`, exposes named jobs, takes a lock to stop overlaps, and provides a deliberate `--resync --force-bisync` recovery path when `bisync` safety checks trip.
 *   **`android/scripts/sync-yggsync-fast.sh`:** Runs the fast notes/Obsidian job set on a calmer schedule. It checks battery state, lowers process priority, and only runs jobs that actually exist in the local `yggsync` config.
 *   **`android/scripts/sync-yggsync-bulk.sh`:** Runs slower media/archive jobs such as DCIM and screenshots. It is intentionally conservative and skips work if the relevant jobs are not configured.
+*   **`android/scripts/update-public-stack.sh`:** Optional boot-time updater. It fast-forwards the public `yggclient` checkout, refreshes the released `yggsync` binary, and re-copies widget shortcuts before the jobs are scheduled.
 *   **`termux-job-scheduler`:** Used via `termux-boot-sync-jobs.sh` to schedule the fast and bulk `yggsync` wrappers. Both are gated on unmetered networking; both now also avoid low-battery runs.
 *   **`Termux:Boot`:** Runs the simple wrapper script `~/.termux/boot/ygg-start-sync-jobs` on device startup.
 *   **`~/.termux/boot/ygg-start-sync-jobs`:** This small script simply calls the main job registration script (`android/scripts/termux-boot-sync-jobs.sh`) located within the git repository. This makes updates easy (just `git pull`).

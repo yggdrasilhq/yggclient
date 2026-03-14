@@ -1,7 +1,7 @@
 #!/data/data/com.termux/files/usr/bin/bash
 set -euo pipefail
 
-VERSION="${1:-v0.2.0}"
+VERSION="${1:-${YGGSYNC_VERSION:-v0.2.1}}"
 OUT="${OUT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/bin/yggsync}"
 YGGSYNC_REPO="${YGGSYNC_REPO:-https://github.com/yggdrasilhq/yggsync}"
 URL="${YGGSYNC_REPO%/}/releases/download/${VERSION}/yggsync-android-arm64"

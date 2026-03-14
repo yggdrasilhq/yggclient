@@ -79,15 +79,11 @@ else
     fi
 fi
 
-# --- Make sync scripts executable ---
-echo "Making scripts executable..."
-chmod +x "$YGG_CLIENT_DIR/android/scripts/sync-obsidian.sh"
-chmod +x "$TERMUX_BOOT_SETUP_SCRIPT"
-chmod +x "$BOOTSTRAP_SCRIPT" # Ensure bootstrap is executable too
-
 # --- Make core scripts executable ---
 echo "Making core scripts executable..."
 chmod +x "$YGG_CLIENT_DIR/android/scripts/"*.sh # Make all scripts in android/scripts executable
+chmod +x "$TERMUX_BOOT_SETUP_SCRIPT"
+chmod +x "$BOOTSTRAP_SCRIPT" # Ensure bootstrap is executable too
 
 # --- Setup Termux:Boot ---
 echo "Setting up Termux:Boot script..."
@@ -179,25 +175,19 @@ echo ""
 
 # --- Test Sync (Optional Initial Sync) ---
 # Modified this section to run initial sync with --resync --verbose
-read -p "Do you want to run an initial Obsidian sync now? (Recommended, uses --resync) (y/N): " run_sync_now
+read -p "Do you want to run an initial Obsidian sync now? (Recommended, uses yggsync recovery mode) (y/N): " run_sync_now
 if [[ "$run_sync_now" =~ ^[Yy]$ ]]; then
-    echo "Running initial sync with --resync --verbose..."
-    echo "Log file: $STATE_DIR/sync-obsidian.log"
-    # Run with --resync and --verbose flags
-    bash "$YGG_CLIENT_DIR/android/scripts/sync-obsidian.sh" --resync --verbose
+    echo "Running initial yggsync recovery sync..."
+    echo "Log file: $STATE_DIR/sync-yggsync-fast.log"
+    JOBS="obsidian,notes" bash "$YGG_CLIENT_DIR/android/shortcuts/sync-obsidian-resync"
     sync_test_exit_code=$?
-    # (Keep the exit code checking logic as before)
-    if [ $sync_test_exit_code -eq 0 ] || [ $sync_test_exit_code -eq 9 ]; then
+    if [ $sync_test_exit_code -eq 0 ]; then
         echo "Initial sync finished (Exit code: $sync_test_exit_code). Check logs for details."
-    elif [ $sync_test_exit_code -eq 124 ]; then
-        echo "Initial sync TIMED OUT. Check logs: $STATE_DIR/sync-obsidian.log"
-    elif [ $sync_test_exit_code -eq 7 ]; then
-        echo "Initial sync FAILED (Code 7): Resync needed, but it was already attempted. Check rclone config and logs."
     else
-        echo "Initial sync FAILED (Exit code: $sync_test_exit_code). Check logs for details: $STATE_DIR/sync-obsidian.log"
+        echo "Initial sync FAILED (Exit code: $sync_test_exit_code). Check logs for details: $STATE_DIR/sync-yggsync-fast.log"
     fi
 else
-    echo "Skipping initial sync. Automatic syncs will run without --resync."
+    echo "Skipping initial sync. Automatic syncs will run in the calmer scheduled mode."
     echo "If you encounter issues later, use the 'sync-obsidian-resync' widget/shortcut."
 fi
 
@@ -210,6 +200,6 @@ echo " ( bash $YGG_CLIENT_DIR/android/scripts/setup-android-sync.sh ) "
 echo "after doing a 'git pull' if any scripts in 'android/shortcuts/' were updated,"
 echo "to ensure the copies in ~/.shortcuts/tasks/ and ~/.termux/widget/dynamic_shortcuts/ are updated."
 echo "-------------------------------------"
-echo "The Obsidian sync job is scheduled and should run periodically on Wi-Fi."
+echo "The yggsync fast and bulk jobs are scheduled and should run periodically on unmetered network."
 echo "The setup will be re-applied automatically on boot via Termux:Boot."
 echo "Remember to disable battery optimizations!"

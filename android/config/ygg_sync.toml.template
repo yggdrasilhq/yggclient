@@ -1,7 +1,7 @@
 # Copy this to ~/.config/ygg_sync.toml on the phone and edit usernames/paths as needed.
 rclone_binary = "rclone"
 rclone_config = "~/.config/rclone/rclone.conf"
-default_flags = ["--fast-list", "--use-json-log", "--stats=30s", "--transfers=4"]
+default_flags = ["--use-json-log", "--stats=120s", "--transfers=1", "--checkers=2"]
 
 [[jobs]]
 name   = "obsidian"
@@ -10,6 +10,16 @@ local  = "~/storage/shared/Documents/obsidian"
 remote = "smb0:data/smbfs/dada/obsidian"
 resync_on_exit = [7]
 resync_flags   = ["--resync"]
+flags = [
+  "--create-empty-src-dirs",
+  "--track-renames",
+  "--resilient",
+  "--recover",
+  "--conflict-loser",
+  "pathname",
+  "--max-delete",
+  "90",
+]
 
 [[jobs]]
 name   = "whatsapp-backups"

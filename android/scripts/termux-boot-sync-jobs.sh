@@ -19,22 +19,25 @@ sleep 30
 # --- Fast job (obsidian-only via yggsync) ---
 JOB_ID_FAST=101
 SCRIPT_FAST="$YGG_CLIENT_DIR/android/scripts/sync-yggsync-fast.sh"
+FAST_PERIOD_MS="${YGG_FAST_PERIOD_MS:-10800000}"
 chmod +x "$SCRIPT_FAST"
 echo "$(date '+%Y-%m-%d %H:%M:%S') - Scheduling fast yggsync job (ID: $JOB_ID_FAST)..." >> "$BOOT_LOG"
 termux-job-scheduler --job-id $JOB_ID_FAST \
                      --script "$SCRIPT_FAST" \
-                     --period-ms 3600000 \
+                     --period-ms "$FAST_PERIOD_MS" \
                      --network unmetered \
-                     --persisted true
+                     --persisted true \
+                     --battery-not-low true
 
 # --- Bulk job (media/backup via yggsync) ---
 JOB_ID_BULK=102
 SCRIPT_BULK="$YGG_CLIENT_DIR/android/scripts/sync-yggsync-bulk.sh"
+BULK_PERIOD_MS="${YGG_BULK_PERIOD_MS:-43200000}"
 chmod +x "$SCRIPT_BULK"
 echo "$(date '+%Y-%m-%d %H:%M:%S') - Scheduling bulk yggsync job (ID: $JOB_ID_BULK)..." >> "$BOOT_LOG"
 termux-job-scheduler --job-id $JOB_ID_BULK \
                      --script "$SCRIPT_BULK" \
-                     --period-ms 21600000 \
+                     --period-ms "$BULK_PERIOD_MS" \
                      --network unmetered \
                      --persisted true \
                      --battery-not-low true

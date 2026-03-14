@@ -16,7 +16,7 @@ readonly KMONAD_VERSION="${KMONAD_VERSION:-0.4.2}"
 readonly KMONAD_URL="https://github.com/kmonad/kmonad/releases/download/${KMONAD_VERSION}/kmonad-linux"
 readonly YGGSYNC_DEFAULT_BIN="${HOME}/.local/bin/yggsync"
 readonly YGGSYNC_FETCH_SCRIPT="${REPO_ROOT}/scripts/yggsync/fetch-yggsync.sh"
-readonly YGGSYNC_DEFAULT_VERSION="${YGGSYNC_VERSION:-v0.2.0}"
+readonly YGGSYNC_DEFAULT_VERSION="${YGGSYNC_VERSION:-v0.2.1}"
 
 # --- Color Definitions ---
 readonly RED='\033[0;31m'

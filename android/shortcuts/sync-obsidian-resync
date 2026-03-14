@@ -1,13 +1,29 @@
 #!/data/data/com.termux/files/usr/bin/bash
 
-# Manual Obsidian sync (same as fast job) via yggsync
-# Note: yggsync handles edge cases; no explicit --resync needed.
+# Manual Obsidian recovery sync via yggsync.
 
 CONFIG="${YGG_SYNC_CONFIG:-$HOME/.config/ygg_sync.toml}"
 YGG_BIN="${YGG_BIN:-$HOME/.local/bin/yggsync}"
+JOBS="${JOBS:-obsidian,notes}"
+
+resolve_jobs() {
+  local wanted raw job present=()
+  raw="$("$YGG_BIN" -config "$CONFIG" -list 2>/dev/null || true)"
+  for wanted in ${JOBS//,/ }; do
+    if printf '%s\n' "$raw" | grep -qx "$wanted"; then
+      present+=("$wanted")
+    fi
+  done
+  (IFS=,; printf '%s' "${present[*]}")
+}
 
 termux-toast "Starting yggsync: obsidian"
-"$YGG_BIN" -config "$CONFIG" -jobs obsidian
+resolved_jobs="$(resolve_jobs)"
+if [[ -z "$resolved_jobs" ]]; then
+  termux-toast -b yellow -c black "No Obsidian job found in yggsync config"
+  exit 1
+fi
+"$YGG_BIN" -config "$CONFIG" --resync --force-bisync -jobs "$resolved_jobs"
 
 if [ $? -eq 0 ]; then
   termux-toast "Obsidian sync done"

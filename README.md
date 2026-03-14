@@ -25,6 +25,8 @@ Design rule:
 Use:
 - `config/profiles.example.env` for shareable defaults
 - `config/profiles.local.env` for machine/user secrets and private endpoints (gitignored)
+- `yggclient.example.toml` for shareable TUI-friendly config
+- `yggclient.local.toml` for local endpoint state (gitignored)
 
 Never commit private hosts, tokens, or environment-specific secrets.
 
@@ -40,12 +42,23 @@ Never commit private hosts, tokens, or environment-specific secrets.
    source "$HOME/git/yggclient/config/bashrc/index.template"
    ```
 
+## TOML-First Setup
+
+`yggcli` writes `yggclient.local.toml` first, then renders the legacy shell profile for compatibility:
+
+```bash
+cp yggclient.example.toml yggclient.local.toml
+python3 scripts/render-profile-env.py
+```
+
+This keeps the public repo clean while preserving the current shell-based install flows.
+
 ## Migration From `ygg_client`
 
-1. Switch shell sourcing from `~/git/ygg_client` to `~/git/yggclient`.
+1. Switch shell sourcing from `~/gh/yggclient` or your chosen clone path.
 2. Move private Infisical/profile values into `config/profiles.local.env`.
 3. Reinstall currently used `ygg-*` units from templates in this repo so installed unit files reference the new repository path.
-4. Verify no active unit file references `~/git/ygg_client`.
+4. Verify no active unit file references the old private repository path.
 
 ## License
 

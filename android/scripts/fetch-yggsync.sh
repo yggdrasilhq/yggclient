@@ -1,9 +1,9 @@
 #!/data/data/com.termux/files/usr/bin/bash
 set -euo pipefail
 
-VERSION="${1:-v0.1.3}"
+VERSION="${1:-v0.2.0}"
 OUT="${OUT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/bin/yggsync}"
-URL="https://g.gour.top/yggdrasilhq/yggsync/releases/download/${VERSION}/yggsync-android-arm64"
+URL="https://github.com/yggdrasilhq/yggsync/releases/download/${VERSION}/yggsync-android-arm64"
 
 log(){ printf "[%s] %s\n" "$(date '+%Y-%m-%d %H:%M:%S')" "$*"; }
 

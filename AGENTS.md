@@ -19,3 +19,5 @@ Maintain client-side automation for Yggdrasil endpoints (Linux and Android):
 
 Use `config/profiles.local.env` (gitignored) to inject private infrastructure values.
 Keep `config/profiles.example.env` generalized.
+The TOML source of truth for new tooling is `yggclient.local.toml` (gitignored), with
+`python3 scripts/render-profile-env.py` generating the shell profile used by legacy scripts.

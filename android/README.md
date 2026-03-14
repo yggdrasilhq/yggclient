@@ -14,7 +14,7 @@ This directory contains scripts and configuration for setting up background sync
     bash android/scripts/bootstrap.sh
     ```
     This installs `termux-api`, `rclone`, `git`, `openssh`, and other utilities. It also runs `termux-setup-storage`. You *must* accept the storage permission request from Android when it pops up.
-6.  **Optional (multi-job sync):** Build `yggsync` from the sibling repo (`~/gh/yggsync`) or download a release via `bash android/scripts/fetch-yggsync.sh v0.1.3`, then run `android/scripts/install.sh` to place it in `~/.local/bin`. Configure via `android/config/ygg_sync.toml.template` -> `~/.config/ygg_sync.toml`.
+6.  **Optional (multi-job sync):** Build `yggsync` from the sibling repo (`~/gh/yggsync`) or download a release via `bash android/scripts/fetch-yggsync.sh v0.2.0`, then run `android/scripts/install.sh` to place it in `~/.local/bin`. Configure via `android/config/ygg_sync.toml.template` -> `~/.config/ygg_sync.toml`.
 
 ## Initial Setup
 

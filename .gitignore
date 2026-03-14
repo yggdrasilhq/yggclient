@@ -3,6 +3,7 @@ android/bin/yggsync
 
 # Local private profile
 config/profiles.local.env
+yggclient.local.toml
 
 # editor/system
 .DS_Store

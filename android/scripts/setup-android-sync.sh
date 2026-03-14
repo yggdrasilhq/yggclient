@@ -122,7 +122,7 @@ if [ -d "$SHORTCUTS_DIR_SRC" ]; then
     done
     echo "Termux:Widget home screen shortcuts copied to $SHORTCUTS_DIR_TARGET_WIDGET_TASKS."
     echo "NOTE: You may need to restart Termux:Widget or your launcher for changes to appear."
-    echo "      Remember to add the desired shortcuts (e.g., sync-obsidian-now, sync-obsidian-resync) to your home screen manually via Android Widgets."
+    echo "      Remember to add the desired shortcuts (e.g., sync-obsidian-resync, sync-yggsync-fast) to your home screen manually via Android Widgets."
 else
      echo "No source shortcuts directory found at $SHORTCUTS_DIR_SRC. Skipping widget shortcut setup."
 fi

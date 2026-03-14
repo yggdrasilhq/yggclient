@@ -55,8 +55,9 @@ This directory contains scripts and configuration for setting up background sync
 *   **`android/scripts/termux-boot-sync-jobs.sh`:** Re-registers the necessary jobs with `termux-job-scheduler` after a boot, ensuring the schedule persists.
 *   **`android/scripts/setup-android-sync.sh`:** Orchestrates the initial setup and configuration on the Android device. Can be re-run if needed. **It COPIES executable scripts from `android/shortcuts/` into `~/.shortcuts/tasks/` (for home screen widgets) and `~/.termux/widget/dynamic_shortcuts/` (for app long-press shortcuts).** Runs the optional initial recovery sync through `yggsync`.
 *   **`android/shortcuts/`:** Contains scripts for Termux:Widget:
-    *   `sync-obsidian-now`: Legacy manual sync shortcut.
     *   `sync-obsidian-resync`: Triggers a recovery sync with `--resync --force-bisync`. Use this when deletes or renames trip bisync safety checks, or when the normal sync reports a state error.
+    *   `sync-yggsync-fast`: Triggers the calmer fast-job wrapper manually.
+    *   `sync-yggsync-bulk`: Triggers the calmer bulk-job wrapper manually.
 
 ## Updating
 

@@ -17,6 +17,9 @@ battery_ok() {
   local status pct
   status="$(termux-battery-status 2>/dev/null | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("status",""))' 2>/dev/null || true)"
   pct="$(termux-battery-status 2>/dev/null | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("percentage",""))' 2>/dev/null || true)"
+  if [[ -z "$pct" ]]; then
+    return 0
+  fi
   if [[ "$status" == "CHARGING" || "$status" == "FULL" ]]; then
     return 0
   fi

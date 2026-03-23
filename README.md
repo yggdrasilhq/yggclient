@@ -27,6 +27,7 @@ The intent is that you only edit a few variables, render the config, and then ru
 - [`scripts/yggsync/run-desktop-yggsync.sh`](/home/pi/gh/yggclient/scripts/yggsync/run-desktop-yggsync.sh): desktop wrapper
 - [`config/yggsync/desktop/ygg_sync.toml.template`](/home/pi/gh/yggclient/config/yggsync/desktop/ygg_sync.toml.template): desktop template
 - [`android/config/ygg_sync.toml.template`](/home/pi/gh/yggclient/android/config/ygg_sync.toml.template): Android template
+- [`android/config/ygg_client.env.example`](/home/pi/gh/yggclient/android/config/ygg_client.env.example): optional Android runtime policy overrides
 - [`android/scripts/setup-android-sync.sh`](/home/pi/gh/yggclient/android/scripts/setup-android-sync.sh): Android scheduler and shortcut setup
 - [`android/scripts/update-public-stack.sh`](/home/pi/gh/yggclient/android/scripts/update-public-stack.sh): boot-time refresh
 
@@ -316,6 +317,7 @@ What the Android stack does:
 
 - installs or refreshes `~/.local/bin/yggsync`
 - copies the Android template to `~/.config/ygg_sync.toml` if needed
+- can source `~/.config/ygg_client.env` for runtime battery, heat, Wi-Fi, and Tailscale policy
 - schedules fast and bulk jobs through `termux-job-scheduler`
 - refreshes Termux widget and dynamic shortcut copies
 - can refresh the public checkout and `yggsync` release binary on boot
@@ -330,6 +332,34 @@ If you need a one-off local bootstrap, you can also place `password = "..."` in 
 
 The `sync-obsidian-resync` shortcut name is kept for compatibility, but it now runs a native `worktree` sync instead of an old `rclone bisync` recovery flow.
 
+### Android Runtime Policy
+
+The Android wrappers now guard `yggsync` runs with live device checks.
+They can:
+
+- skip starting when the battery is low
+- skip starting when the phone is too warm
+- require Wi-Fi before starting
+- check whether the SMB target is reachable
+- notice when SMB becomes unreachable mid-run
+- stop the current run if Wi-Fi disappears or the phone gets too hot
+
+If you are away from home and the NAS is only reachable over Tailscale, the wrappers will simply defer the run when the SMB host is unreachable and Tailscale is off.
+
+Optional runtime overrides live in `~/.config/ygg_client.env`.
+Start from [`android/config/ygg_client.env.example`](/home/pi/gh/yggclient/android/config/ygg_client.env.example).
+
+The main knobs are:
+
+- `YGG_REQUIRE_WIFI=1`
+- `YGG_MIN_BATTERY_FAST=50`
+- `YGG_MIN_BATTERY_BULK=65`
+- `YGG_MAX_BATTERY_TEMP_FAST_C=39.5`
+- `YGG_MAX_BATTERY_TEMP_BULK_C=38.5`
+- `YGG_MONITOR_INTERVAL_SECONDS=20`
+- `YGG_HOST_CHECK_TIMEOUT_SECONDS=3`
+- `YGG_TAILSCALE_BIN=tailscale`
+
 ## Obsidian Usage
 
 Two workflows are supported:
@@ -339,6 +369,27 @@ Two workflows are supported:
 
 Your current direct-SMB workflow is acceptable under the first model.
 The `worktree` path exists for the cases where you want less filesystem risk without giving up a central NAS repository.
+
+## Why Two Repos
+
+`yggsync` does not really "need" `yggclient`.
+
+The split is:
+
+- `yggsync`: the engine that knows how to copy, retain, and run worktree sync against SMB
+- `yggclient`: endpoint policy and operator glue
+
+That means phone-specific behavior such as:
+
+- battery thresholds
+- heat limits
+- Wi-Fi-only policy
+- Tailscale-aware reachability checks
+- Termux widgets and job scheduling
+
+belongs in `yggclient`, not in `yggsync`.
+
+This keeps `yggsync` portable across Linux and Android while letting `yggclient` be opinionated about one device class.
 
 ## Setup Checklist
 

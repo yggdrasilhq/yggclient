@@ -1,32 +1,20 @@
 #!/data/data/com.termux/files/usr/bin/bash
 
-# Manual Obsidian sync via native yggsync worktree mode.
-
-CONFIG="${YGG_SYNC_CONFIG:-$HOME/.config/ygg_sync.toml}"
-YGG_BIN="${YGG_BIN:-$HOME/.local/bin/yggsync}"
+# Manual Obsidian sync via the guarded fast wrapper.
+SCRIPT_DIR_SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+YGG_CLIENT_DIR_DEFAULT="$(cd "$SCRIPT_DIR_SELF/../.." && pwd)"
+YGG_CLIENT_DIR="${YGG_CLIENT_DIR:-$YGG_CLIENT_DIR_DEFAULT}"
+RUNNER="$YGG_CLIENT_DIR/android/scripts/sync-yggsync-fast.sh"
 JOBS="${JOBS:-obsidian,notes}"
 
-resolve_jobs() {
-  local wanted raw job present=()
-  raw="$("$YGG_BIN" -config "$CONFIG" -list 2>/dev/null || true)"
-  for wanted in ${JOBS//,/ }; do
-    if printf '%s\n' "$raw" | grep -qx "$wanted"; then
-      present+=("$wanted")
-    fi
-  done
-  (IFS=,; printf '%s' "${present[*]}")
-}
-
 termux-toast "Starting yggsync: obsidian"
-resolved_jobs="$(resolve_jobs)"
-if [[ -z "$resolved_jobs" ]]; then
-  termux-toast -b yellow -c black "No Obsidian job found in yggsync config"
-  exit 1
-fi
-"$YGG_BIN" -config "$CONFIG" -worktree-op sync -jobs "$resolved_jobs"
+JOBS="$JOBS" "$RUNNER"
+status=$?
 
-if [ $? -eq 0 ]; then
+if [ $status -eq 0 ]; then
   termux-toast "Obsidian sync done"
+elif [ $status -eq 75 ]; then
+  termux-toast -b yellow -c black "Obsidian sync deferred"
 else
   termux-toast -b red -c white "Obsidian sync failed"
 fi

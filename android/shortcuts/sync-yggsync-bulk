@@ -1,15 +1,19 @@
 #!/data/data/com.termux/files/usr/bin/bash
 
-# Manual trigger for yggsync bulk job set
-CONFIG="${YGG_SYNC_CONFIG:-$HOME/.config/ygg_sync.toml}"
-YGG_BIN="${YGG_BIN:-$HOME/.local/bin/yggsync}"
+# Manual trigger for the guarded yggsync bulk wrapper.
+SCRIPT_DIR_SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+YGG_CLIENT_DIR_DEFAULT="$(cd "$SCRIPT_DIR_SELF/../.." && pwd)"
+YGG_CLIENT_DIR="${YGG_CLIENT_DIR:-$YGG_CLIENT_DIR_DEFAULT}"
+RUNNER="$YGG_CLIENT_DIR/android/scripts/sync-yggsync-bulk.sh"
 JOBS="${JOBS:-whatsapp-backups,whatsapp-media,dcim,screenshots,cubecallacr,androidfs}"
 
 termux-toast "yggsync bulk: $JOBS"
-"$YGG_BIN" -config "$CONFIG" -jobs "$JOBS"
+JOBS="$JOBS" "$RUNNER"
 status=$?
 if [ $status -eq 0 ]; then
   termux-toast "yggsync bulk done"
+elif [ $status -eq 75 ]; then
+  termux-toast -b yellow -c black "yggsync bulk deferred"
 else
   termux-toast -b red -c white "yggsync bulk failed ($status)"
 fi

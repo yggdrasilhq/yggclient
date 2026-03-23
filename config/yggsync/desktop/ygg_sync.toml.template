@@ -42,46 +42,46 @@ keep = 1
 name   = "flatpak-system"
 type   = "copy"
 local  = "/var/lib/flatpak"
-remote = "nas:smbfs/dada/flatpak/var/lib/flatpak"
+remote = "nas:smbfs/${SAMBA_USER}/flatpak/var/lib/flatpak"
 
 [[jobs]]
 name   = "flatpak-user"
 type   = "copy"
 local  = "~/.local/share/flatpak"
-remote = "nas:smbfs/dada/flatpak/home/.local/share/flatpak"
+remote = "nas:smbfs/${SAMBA_USER}/flatpak/home/.local/share/flatpak"
 
 [[jobs]]
 name   = "flatpak-app-data"
 type   = "copy"
 local  = "~/.var/app"
-remote = "nas:smbfs/dada/flatpak/home/.var/app"
+remote = "nas:smbfs/${SAMBA_USER}/flatpak/home/.var/app"
 
 [[jobs]]
 name   = "flatpak-etc"
 type   = "copy"
 local  = "/etc/flatpak"
-remote = "nas:smbfs/dada/flatpak/etc/flatpak"
+remote = "nas:smbfs/${SAMBA_USER}/flatpak/etc/flatpak"
 
 [[jobs]]
 name   = "home-config"
 type   = "copy"
 local  = "~/.config"
-remote = "nas:smbfs/dada/flatpak/home/.config"
+remote = "nas:smbfs/${SAMBA_USER}/flatpak/home/.config"
 
 [[jobs]]
 name   = "home-local-share"
 type   = "copy"
 local  = "~/.local/share"
-remote = "nas:smbfs/dada/flatpak/home/.local/share"
+remote = "nas:smbfs/${SAMBA_USER}/flatpak/home/.local/share"
 
 [[jobs]]
 name   = "home-local-state"
 type   = "copy"
 local  = "~/.local/state"
-remote = "nas:smbfs/dada/flatpak/home/.local/state"
+remote = "nas:smbfs/${SAMBA_USER}/flatpak/home/.local/state"
 
 [[jobs]]
 name   = "home-var"
 type   = "copy"
 local  = "~/.var"
-remote = "nas:smbfs/dada/flatpak/home/.var"
+remote = "nas:smbfs/${SAMBA_USER}/flatpak/home/.var"

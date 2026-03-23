@@ -63,8 +63,8 @@ You usually only need to set these values:
 
 - `SAMBA_HOST`: NAS hostname or IP
 - `SAMBA_SHARE`: SMB share name, usually `data`
-- `SAMBA_USER`: path owner used in remote paths, for example `dada`
-- `SAMBA_USERNAME`: SMB login account, for example `datauser`
+- `SAMBA_USER`: path owner used in remote paths, for example `path-user`
+- `SAMBA_USERNAME`: SMB login account, for example `smb-login`
 - `SAMBA_PASSWORD_ENV`: usually `SAMBA_PASSWORD`
 - `SCREENCASTS_REMOTE`: only if the default screencast path is wrong for that machine
 
@@ -73,13 +73,13 @@ Important distinction:
 - `SAMBA_USERNAME` is the SMB login name
 - `SAMBA_USER` is the username embedded in remote paths
 
-On your phone, for example, that means:
+For a phone where the SMB login and the path owner differ, that can look like:
 
 ```bash
-SAMBA_HOST=192.168.0.213
+SAMBA_HOST=nas.internal
 SAMBA_SHARE=data
-SAMBA_USER=dada
-SAMBA_USERNAME=datauser
+SAMBA_USER=path-user
+SAMBA_USERNAME=smb-login
 SAMBA_PASSWORD_ENV=SAMBA_PASSWORD
 ```
 
@@ -138,7 +138,7 @@ Example Android Obsidian job:
 name = "obsidian"
 type = "worktree"
 local = "~/storage/shared/Documents/obsidian"
-remote = "nas:smbfs/dada/obsidian"
+remote = "nas:smbfs/path-user/obsidian"
 filter_rules = [
   "- **/.obsidian/**",
   "- **/.trash/**",

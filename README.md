@@ -20,6 +20,21 @@ This README is the operator guide for running `yggsync` through `yggclient`.
 If you are not comfortable setting this up from scratch, use the sections below as the minimum operator checklist.
 The intent is that you only edit a few variables, render the config, and then run known commands.
 
+```mermaid
+flowchart LR
+    A[yggclient] --> B[Fetch yggsync]
+    A --> C[Render ygg_sync.toml]
+    A --> D[Install wrappers and schedulers]
+    B --> E[yggsync binary]
+    C --> F[Rendered endpoint config]
+    D --> G[Desktop service or Termux jobs]
+    E --> H[Sync engine run]
+    F --> H
+    G --> H
+    H --> I[Local files]
+    H --> J[NAS over SMB or mounted path]
+```
+
 ## Layout
 
 - [`scripts/yggsync/fetch-yggsync.sh`](/home/pi/gh/yggclient/scripts/yggsync/fetch-yggsync.sh): fetch Linux `yggsync`
@@ -258,6 +273,16 @@ bash scripts/yggsync/render-config.sh desktop
 
 The desktop installer at [`scripts/install/install-service.sh`](/home/pi/gh/yggclient/scripts/install/install-service.sh) will render `~/.config/ygg_sync.toml` automatically when the desktop units are installed and the file does not already exist.
 
+```mermaid
+flowchart TD
+    A[Edit local profile values] --> B[render-profile-env.py optional]
+    A --> C[render-config.sh]
+    B --> C
+    C --> D[~/.config/ygg_sync.toml]
+    D --> E[yggsync dry-run]
+    E --> F[Desktop service or Android schedulers]
+```
+
 ## Commands You Will Actually Run
 
 Desktop:
@@ -465,6 +490,21 @@ They can:
 - stop the current run if Wi-Fi disappears or the phone gets too hot
 
 If you are away from home and the NAS is only reachable over Tailscale, the wrappers will simply defer the run when the SMB host is unreachable and Tailscale is off.
+
+```mermaid
+flowchart TD
+    A[Termux job or shortcut] --> B{Battery ok}
+    B -->|no| X[Defer run]
+    B -->|yes| C{Temperature ok}
+    C -->|no| X
+    C -->|yes| D{Wi-Fi required and connected}
+    D -->|no| X
+    D -->|yes| E{NAS reachable}
+    E -->|yes| F[Run yggsync]
+    E -->|no| G{Tailscale enabled and route up}
+    G -->|no| X
+    G -->|yes| F
+```
 
 Optional runtime overrides live in `~/.config/ygg_client.env`.
 Start from [`android/config/ygg_client.env.example`](/home/pi/gh/yggclient/android/config/ygg_client.env.example).

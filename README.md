@@ -303,6 +303,106 @@ Manual Obsidian commands:
 ~/.local/bin/yggsync -config ~/.config/ygg_sync.toml -jobs obsidian -worktree-op sync
 ```
 
+## Example Installs
+
+### Laptop Example
+
+This is the shortest realistic laptop flow.
+
+1. Clone the repo:
+
+```bash
+mkdir -p ~/gh
+cd ~/gh
+git clone https://github.com/yggdrasilhq/yggclient.git
+cd ~/gh/yggclient
+```
+
+2. Set your machine-specific values:
+
+```bash
+cp config/profiles.example.env config/profiles.local.env
+```
+
+Edit `config/profiles.local.env` and set at least:
+
+```bash
+SAMBA_HOST=nas.internal
+SAMBA_SHARE=data
+SAMBA_USER=path-user
+SAMBA_USERNAME=smb-login
+SAMBA_PASSWORD_ENV=SAMBA_PASSWORD
+SCREENCASTS_REMOTE=immich/path-user/desktop/Screencasts
+```
+
+3. Fetch and render:
+
+```bash
+bash scripts/yggsync/fetch-yggsync.sh
+bash scripts/yggsync/render-config.sh desktop
+export SAMBA_PASSWORD='your-password'
+~/.local/bin/yggsync -config ~/.config/ygg_sync.toml -list
+~/.local/bin/yggsync -config ~/.config/ygg_sync.toml -jobs screenshots-desktop -dry-run
+```
+
+4. If you want the desktop timer/service flow:
+
+```bash
+bash scripts/install/install-service.sh
+```
+
+### Android Example From Fresh Termux Install
+
+This is the shortest realistic phone flow.
+
+1. Install these Android apps first:
+   - `Termux`
+   - `Termux:API`
+   - `Termux:Boot`
+
+2. Open Termux and bootstrap:
+
+```bash
+pkg update
+pkg install -y git openssh
+mkdir -p ~/gh
+cd ~/gh
+git clone https://github.com/yggdrasilhq/yggclient.git
+cd ~/gh/yggclient
+bash android/scripts/bootstrap.sh
+```
+
+3. Fetch and install the Android binary:
+
+```bash
+bash android/scripts/fetch-yggsync.sh
+bash android/scripts/install.sh
+```
+
+4. Render or copy the Android config:
+
+```bash
+bash scripts/yggsync/render-config.sh android
+```
+
+5. Edit `~/.config/ygg_sync.toml` if needed, then provide credentials:
+
+```bash
+export SAMBA_PASSWORD='your-password'
+```
+
+6. Run setup:
+
+```bash
+bash android/scripts/setup-android-sync.sh
+```
+
+7. Test a small job:
+
+```bash
+~/.local/bin/yggsync -config ~/.config/ygg_sync.toml -jobs screenshots -dry-run
+```
+
 ## Android Stack
 
 Bootstrap and install:

@@ -6,6 +6,7 @@ YGG_CLIENT_DIR_DEFAULT="$(cd "$SCRIPT_DIR_SELF/../.." && pwd)"
 YGG_CLIENT_DIR="${YGG_CLIENT_DIR:-$YGG_CLIENT_DIR_DEFAULT}"
 BOOT_LOG="$HOME/.local/state/ygg_client/termux-boot.log"
 LOCAL_BIN="$HOME/.local/bin"
+YGGSYNC_TARGET_VERSION="${YGGSYNC_VERSION:-v0.2.2}"
 
 log() {
   printf '%s - %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*" >> "$BOOT_LOG"
@@ -24,12 +25,20 @@ else
 fi
 
 if [[ -x "$YGG_CLIENT_DIR/android/scripts/fetch-yggsync.sh" ]]; then
-  log "Auto-update: refreshing yggsync release binary."
-  mkdir -p "$LOCAL_BIN"
-  if OUT="$LOCAL_BIN/yggsync" bash "$YGG_CLIENT_DIR/android/scripts/fetch-yggsync.sh" >>"$BOOT_LOG" 2>&1; then
-    log "Auto-update: yggsync refresh succeeded."
+  current_version=""
+  if [[ -x "$LOCAL_BIN/yggsync" ]]; then
+    current_version="$("$LOCAL_BIN/yggsync" -version 2>/dev/null | awk '{print $2}' || true)"
+  fi
+  if [[ "$current_version" == "${YGGSYNC_TARGET_VERSION#v}" ]]; then
+    log "Auto-update: installed yggsync already matches ${YGGSYNC_TARGET_VERSION}; skipping fetch."
   else
-    log "Auto-update: yggsync refresh failed; keeping existing binary."
+    log "Auto-update: refreshing yggsync release binary to ${YGGSYNC_TARGET_VERSION}."
+    mkdir -p "$LOCAL_BIN"
+    if OUT="$LOCAL_BIN/yggsync" bash "$YGG_CLIENT_DIR/android/scripts/fetch-yggsync.sh" "$YGGSYNC_TARGET_VERSION" >>"$BOOT_LOG" 2>&1; then
+      log "Auto-update: yggsync refresh succeeded."
+    else
+      log "Auto-update: yggsync refresh failed; keeping existing binary."
+    fi
   fi
 fi
 

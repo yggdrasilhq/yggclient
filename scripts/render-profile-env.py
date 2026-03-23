@@ -38,6 +38,8 @@ def main() -> int:
         f"APT_HTTPS_PROXY={shell_quote(str(network.get('apt_https_proxy', '')))}",
         f"YGGSYNC_REPO={shell_quote(str(sync.get('yggsync_repo', 'https://github.com/yggdrasilhq/yggsync')))}",
         f"YGGSYNC_CONFIG={shell_quote(str(sync.get('yggsync_config', '~/.config/ygg_sync.toml')))}",
+        f"SAMBA_USER={shell_quote(str(sync.get('samba_user', '')))}",
+        f"SCREENCASTS_REMOTE={shell_quote(str(sync.get('screencasts_remote', '')))}",
         f"ENABLE_YGGSYNC={shell_quote('1' if sync.get('enable_yggsync', True) else '0')}",
         f"INSTALL_DESKTOP_TIMER={shell_quote('1' if services.get('install_desktop_timer', True) else '0')}",
         f"INSTALL_SHIFT_SYNC={shell_quote('1' if services.get('install_shift_sync', False) else '0')}",

@@ -3,6 +3,7 @@
 
 rclone_binary = "rclone"
 rclone_config = "~/.config/rclone/rclone.conf"
+lock_file = "~/.local/state/yggsync.lock"
 default_flags = ["--fast-list", "--use-json-log", "--stats=30s", "--transfers=4"]
 
 [[jobs]]

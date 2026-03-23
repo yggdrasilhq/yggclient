@@ -16,7 +16,8 @@ readonly KMONAD_VERSION="${KMONAD_VERSION:-0.4.2}"
 readonly KMONAD_URL="https://github.com/kmonad/kmonad/releases/download/${KMONAD_VERSION}/kmonad-linux"
 readonly YGGSYNC_DEFAULT_BIN="${HOME}/.local/bin/yggsync"
 readonly YGGSYNC_FETCH_SCRIPT="${REPO_ROOT}/scripts/yggsync/fetch-yggsync.sh"
-readonly YGGSYNC_DEFAULT_VERSION="${YGGSYNC_VERSION:-v0.2.1}"
+readonly YGGSYNC_RENDER_SCRIPT="${REPO_ROOT}/scripts/yggsync/render-config.sh"
+readonly YGGSYNC_DEFAULT_VERSION="${YGGSYNC_VERSION:-v0.2.2}"
 
 # --- Color Definitions ---
 readonly RED='\033[0;31m'
@@ -185,8 +186,13 @@ ensure_dependencies() {
                 fi
                 if [[ ! "$resp" =~ ^[Nn]$ ]]; then
                     mkdir -p "$(dirname "$ygg_cfg")"
-                    cp "$tmpl" "$ygg_cfg"
-                    log "Copied template. Please edit ${ygg_cfg} to match your remotes/paths."
+                    if [[ -x "$YGGSYNC_RENDER_SCRIPT" ]]; then
+                        OUT="$ygg_cfg" bash "$YGGSYNC_RENDER_SCRIPT" desktop >/dev/null
+                        log "Rendered yggsync config to ${ygg_cfg}. Review remote paths before first run."
+                    else
+                        cp "$tmpl" "$ygg_cfg"
+                        log "Copied template. Please edit ${ygg_cfg} to match your remotes/paths."
+                    fi
                 else
                     warning "yggsync config missing; units may fail until ${ygg_cfg} exists."
                 fi

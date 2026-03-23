@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION="${1:-${YGGSYNC_VERSION:-v0.2.1}}"
+VERSION="${1:-${YGGSYNC_VERSION:-v0.2.2}}"
 ARCH="${ARCH:-amd64}"
 OS="${OS:-linux}"
 OUT="${OUT:-${HOME}/.local/bin/yggsync}"

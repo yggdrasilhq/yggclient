@@ -1,6 +1,7 @@
 # Copy this to ~/.config/ygg_sync.toml on the phone and edit usernames/paths as needed.
 rclone_binary = "rclone"
 rclone_config = "~/.config/rclone/rclone.conf"
+lock_file = "~/.local/state/yggsync.lock"
 default_flags = ["--use-json-log", "--stats=120s", "--transfers=1", "--checkers=2"]
 
 [[jobs]]
@@ -10,6 +11,14 @@ local  = "~/storage/shared/Documents/obsidian"
 remote = "smb0:data/smbfs/dada/obsidian"
 resync_on_exit = [7]
 resync_flags   = ["--resync"]
+filter_rules = [
+  "- **/.obsidian/**",
+  "- **/.trash/**",
+  "- **/materials/generated/**",
+  "- **/*.conflict*",
+  "- [A-Za-z0-9][A-Za-z0-9][A-Za-z0-9][A-Za-z0-9][A-Za-z0-9][A-Za-z0-9]~[A-Za-z0-9].*",
+  "- **/[A-Za-z0-9][A-Za-z0-9][A-Za-z0-9][A-Za-z0-9][A-Za-z0-9][A-Za-z0-9]~[A-Za-z0-9].*",
+]
 flags = [
   "--create-empty-src-dirs",
   "--resilient",
@@ -69,6 +78,7 @@ exclude = [
   "Android/media/com.whatsapp/WhatsApp/**",
   "DCIM/**",
   "Pictures/Screenshots/**",
+  "Pictures/.thumbnails/**",
   "CubeACR/**",
   "Documents/CubeCallRecorder/**",
   "Documents/obsidian/**",

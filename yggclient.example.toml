@@ -16,6 +16,8 @@ apt_https_proxy = ""
 enable_yggsync = true
 yggsync_repo = "https://github.com/yggdrasilhq/yggsync"
 yggsync_config = "~/.config/ygg_sync.toml"
+samba_user = "alice"
+screencasts_remote = "smb0:data/immich02/alice/desktop/Screencasts"
 
 [services]
 install_desktop_timer = true

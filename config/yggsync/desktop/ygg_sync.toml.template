@@ -1,95 +1,87 @@
 # yggsync desktop template
-# Adjust the rclone remote and paths to match your Nextcloud/NAS layout.
+# Adjust the SMB host/share and paths to match your NAS layout.
 
-rclone_binary = "rclone"
-rclone_config = "~/.config/rclone/rclone.conf"
 lock_file = "~/.local/state/yggsync.lock"
-default_flags = ["--fast-list", "--use-json-log", "--stats=30s", "--transfers=4"]
+worktree_state_dir = "~/.local/state/yggsync/worktrees"
+
+[[targets]]
+name = "nas"
+type = "smb"
+host = "${SAMBA_HOST}"
+share = "${SAMBA_SHARE}"
+username = "${SAMBA_USERNAME}"
+password_env = "${SAMBA_PASSWORD_ENV}"
 
 [[jobs]]
 name   = "screenshots-desktop"
 type   = "copy"
 local  = "~/Pictures/Screenshots"
-remote = "smb0:data/immich02/${SAMBA_USER}/desktop/Screenshots"
-flags  = ["--create-empty-src-dirs"]
+remote = "nas:immich02/${SAMBA_USER}/desktop/Screenshots"
 
 [[jobs]]
 name   = "screencasts"
 type   = "copy"
 local  = "~/Screencasts"
-remote = "${SCREENCASTS_REMOTE}"
-flags  = ["--create-empty-src-dirs"]
+remote = "nas:${SCREENCASTS_REMOTE}"
 
 [[jobs]]
 name   = "downloads-to-nextcloud"
 type   = "copy"
 local  = "~/Downloads"
-remote = "smb0:data/smbfs/${SAMBA_USER}/Downloads"
+remote = "nas:smbfs/${SAMBA_USER}/Downloads"
 include = [
   "session-buddy-export-*",
   "backup_to_nextcloud/**",
 ]
 exclude = ["*"]
-flags   = ["--create-empty-src-dirs"]
 [[jobs.keep_latest]]
 glob = "session-buddy-export-*"
 keep = 1
 
-# Flatpak installs/config/data -> smbfs/dada/flatpak (copy-only; no host deletions).
-# Layout mirrors system root so you can copy everything back into $HOME (and /etc,/var as root if needed).
 [[jobs]]
 name   = "flatpak-system"
 type   = "copy"
 local  = "/var/lib/flatpak"
-remote = "smb0:data/smbfs/dada/flatpak/var/lib/flatpak"
-flags  = ["--create-empty-src-dirs"]
+remote = "nas:smbfs/dada/flatpak/var/lib/flatpak"
 
 [[jobs]]
 name   = "flatpak-user"
 type   = "copy"
 local  = "~/.local/share/flatpak"
-remote = "smb0:data/smbfs/dada/flatpak/home/.local/share/flatpak"
-flags  = ["--create-empty-src-dirs"]
+remote = "nas:smbfs/dada/flatpak/home/.local/share/flatpak"
 
 [[jobs]]
 name   = "flatpak-app-data"
 type   = "copy"
 local  = "~/.var/app"
-remote = "smb0:data/smbfs/dada/flatpak/home/.var/app"
-flags  = ["--create-empty-src-dirs"]
+remote = "nas:smbfs/dada/flatpak/home/.var/app"
 
 [[jobs]]
 name   = "flatpak-etc"
 type   = "copy"
 local  = "/etc/flatpak"
-remote = "smb0:data/smbfs/dada/flatpak/etc/flatpak"
-flags  = ["--create-empty-src-dirs"]
+remote = "nas:smbfs/dada/flatpak/etc/flatpak"
 
-# Home profile/config backups (copy-only; mirror $HOME layout)
 [[jobs]]
 name   = "home-config"
 type   = "copy"
 local  = "~/.config"
-remote = "smb0:data/smbfs/dada/flatpak/home/.config"
-flags  = ["--create-empty-src-dirs"]
+remote = "nas:smbfs/dada/flatpak/home/.config"
 
 [[jobs]]
 name   = "home-local-share"
 type   = "copy"
 local  = "~/.local/share"
-remote = "smb0:data/smbfs/dada/flatpak/home/.local/share"
-flags  = ["--create-empty-src-dirs"]
+remote = "nas:smbfs/dada/flatpak/home/.local/share"
 
 [[jobs]]
 name   = "home-local-state"
 type   = "copy"
 local  = "~/.local/state"
-remote = "smb0:data/smbfs/dada/flatpak/home/.local/state"
-flags  = ["--create-empty-src-dirs"]
+remote = "nas:smbfs/dada/flatpak/home/.local/state"
 
 [[jobs]]
 name   = "home-var"
 type   = "copy"
 local  = "~/.var"
-remote = "smb0:data/smbfs/dada/flatpak/home/.var"
-flags  = ["--create-empty-src-dirs"]
+remote = "nas:smbfs/dada/flatpak/home/.var"

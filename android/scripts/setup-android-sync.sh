@@ -10,9 +10,6 @@ BOOT_SCRIPT_DIR="$HOME/.termux/boot"
 BOOT_SCRIPT_NAME="ygg-start-sync-jobs"
 BOOT_SCRIPT_PATH="$BOOT_SCRIPT_DIR/$BOOT_SCRIPT_NAME"
 TERMUX_BOOT_SETUP_SCRIPT="$YGG_CLIENT_DIR/android/scripts/termux-boot-sync-jobs.sh"
-RCLONE_CONFIG_DIR="$HOME/.config/rclone"
-RCLONE_CONFIG_FILE="$RCLONE_CONFIG_DIR/rclone.conf"
-RCLONE_CONFIG_TEMPLATE="$YGG_CLIENT_DIR/android/config/rclone/rclone.conf.template"
 STATE_DIR="$HOME/.local/state/ygg_client"
 BOOTSTRAP_SCRIPT="$YGG_CLIENT_DIR/android/scripts/bootstrap.sh"
 # --- Shortcut Variables ---
@@ -26,7 +23,6 @@ DYNAMIC_SHORTCUTS_DIR_TARGET="$HOME/.termux/widget/dynamic_shortcuts"
 # --- Prerequisites Check ---
 echo "Checking prerequisites..."
 # Updated error messages to point to the correct bootstrap script path
-command -v rclone >/dev/null 2>&1 || { echo >&2 "ERROR: rclone not found. Run 'bash $BOOTSTRAP_SCRIPT'. Aborting."; exit 1; }
 command -v termux-job-scheduler >/dev/null 2>&1 || { echo >&2 "ERROR: termux-api commands not found. Run 'bash $BOOTSTRAP_SCRIPT' and ensure Termux:API app is installed/running. Aborting."; exit 1; }
 command -v termux-setup-storage >/dev/null 2>&1 || { echo >&2 "ERROR: termux-setup-storage not found? Should be part of Termux base. Aborting."; exit 1; }
 [ -d "$HOME/storage/shared" ] || { echo >&2 "ERROR: ~/storage/shared not found. Run 'termux-setup-storage' and grant permission via the Android popup. Aborting."; exit 1; }
@@ -38,46 +34,19 @@ command -v termux-setup-storage >/dev/null 2>&1 || { echo >&2 "ERROR: termux-set
 mkdir -p "$STATE_DIR"
 echo "State directory ensured at $STATE_DIR"
 
-# --- rclone Configuration Check ---
-# (No changes needed in this section)
-echo "Checking rclone configuration..."
-if [ ! -f "$RCLONE_CONFIG_FILE" ]; then
-    echo "WARNING: rclone config file ($RCLONE_CONFIG_FILE) not found."
-    if [ -f "$RCLONE_CONFIG_TEMPLATE" ]; then
-        echo "Template found at $RCLONE_CONFIG_TEMPLATE."
-        echo "Please run 'rclone config' interactively in Termux to set up your smb0 remote."
-        echo "Refer to the template or README for details."
+echo "Checking yggsync configuration..."
+if [ ! -f "$HOME/.config/ygg_sync.toml" ]; then
+    mkdir -p "$HOME/.config"
+    if [ -x "$YGG_CLIENT_DIR/scripts/yggsync/render-config.sh" ]; then
+        "$YGG_CLIENT_DIR/scripts/yggsync/render-config.sh" android
+        echo "Rendered ~/.config/ygg_sync.toml from the Android template."
     else
-        echo "No template found either. Please run 'rclone config' interactively."
-    fi
-    read -p "Run 'rclone config' now? (y/N): " run_rclone_now
-    if [[ "$run_rclone_now" =~ ^[Yy]$ ]]; then
-        rclone config
-        # Re-check after running
-        if [ ! -f "$RCLONE_CONFIG_FILE" ]; then
-            echo >&2 "ERROR: rclone config file still not found after running command. Aborting setup."
-            exit 1
-        fi
-         echo "rclone config created. Continuing setup..."
-    else
-        echo >&2 "Aborting setup. rclone configuration is required."
-        exit 1
-    fi
-else
-    echo "rclone config file found: $RCLONE_CONFIG_FILE"
-    # Optional: Check if the specific remote exists
-    if ! rclone listremotes --config "$RCLONE_CONFIG_FILE" | grep -q "^smb0:"; then
-       echo >&2 "WARNING: 'smb0:' remote not found in rclone config ($RCLONE_CONFIG_FILE)."
-       echo >&2 "The sync script will fail unless you add it using 'rclone config'."
-       read -p "Continue setup anyway? (y/N): " continue_anyway
-       if [[ ! "$continue_anyway" =~ ^[Yy]$ ]]; then
-           echo "Aborting setup."
-           exit 1
-       fi
-    else
-        echo "'smb0:' remote found in config."
+        cp "$YGG_CLIENT_DIR/android/config/ygg_sync.toml.template" "$HOME/.config/ygg_sync.toml"
+        echo "Created ~/.config/ygg_sync.toml from the Android template."
     fi
 fi
+echo "Ensure your SMB credentials are available to Termux, for example:"
+echo "  export SAMBA_PASSWORD='your-nas-password'"
 
 # --- Make core scripts executable ---
 echo "Making core scripts executable..."
@@ -174,10 +143,9 @@ echo "####################################################################"
 echo ""
 
 # --- Test Sync (Optional Initial Sync) ---
-# Modified this section to run initial sync with --resync --verbose
-read -p "Do you want to run an initial Obsidian sync now? (Recommended, uses yggsync recovery mode) (y/N): " run_sync_now
+read -p "Do you want to run an initial Obsidian sync now? (Recommended, uses native worktree sync) (y/N): " run_sync_now
 if [[ "$run_sync_now" =~ ^[Yy]$ ]]; then
-    echo "Running initial yggsync recovery sync..."
+    echo "Running initial yggsync worktree sync..."
     echo "Log file: $STATE_DIR/sync-yggsync-fast.log"
     JOBS="obsidian,notes" bash "$YGG_CLIENT_DIR/android/shortcuts/sync-obsidian-resync"
     sync_test_exit_code=$?
@@ -188,7 +156,7 @@ if [[ "$run_sync_now" =~ ^[Yy]$ ]]; then
     fi
 else
     echo "Skipping initial sync. Automatic syncs will run in the calmer scheduled mode."
-    echo "If you encounter issues later, use the 'sync-obsidian-resync' widget/shortcut."
+    echo "If you want a manual Obsidian run later, use the 'sync-obsidian-resync' widget/shortcut."
 fi
 
 echo ""

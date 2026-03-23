@@ -1,16 +1,20 @@
-# Copy this to ~/.config/ygg_sync.toml on the phone and edit usernames/paths as needed.
-rclone_binary = "rclone"
-rclone_config = "~/.config/rclone/rclone.conf"
+# Render this to ~/.config/ygg_sync.toml on the phone and adjust host/user/path values as needed.
 lock_file = "~/.local/state/yggsync.lock"
-default_flags = ["--use-json-log", "--stats=120s", "--transfers=1", "--checkers=2"]
+worktree_state_dir = "~/.local/state/yggsync/worktrees"
+
+[[targets]]
+name = "nas"
+type = "smb"
+host = "${SAMBA_HOST}"
+share = "${SAMBA_SHARE}"
+username = "${SAMBA_USERNAME}"
+password_env = "${SAMBA_PASSWORD_ENV}"
 
 [[jobs]]
 name   = "obsidian"
-type   = "bisync"
+type   = "worktree"
 local  = "~/storage/shared/Documents/obsidian"
-remote = "smb0:data/smbfs/dada/obsidian"
-resync_on_exit = [7]
-resync_flags   = ["--resync"]
+remote = "nas:smbfs/${SAMBA_USER}/obsidian"
 filter_rules = [
   "- **/.obsidian/**",
   "- **/.trash/**",
@@ -19,59 +23,47 @@ filter_rules = [
   "- [A-Za-z0-9_][A-Za-z0-9_][A-Za-z0-9_][A-Za-z0-9_][A-Za-z0-9_][A-Za-z0-9_]~[A-Za-z0-9].*",
   "- **/[A-Za-z0-9_][A-Za-z0-9_][A-Za-z0-9_][A-Za-z0-9_][A-Za-z0-9_][A-Za-z0-9_]~[A-Za-z0-9].*",
 ]
-flags = [
-  "--create-empty-src-dirs",
-  "--resilient",
-  "--recover",
-  "--conflict-loser",
-  "pathname",
-  "--max-delete",
-  "90",
-]
 
 [[jobs]]
 name   = "whatsapp-backups"
 type   = "copy"
 local  = "~/storage/shared/Android/media/com.whatsapp/WhatsApp/Databases"
-remote = "smb0:data/whatsapp/dada/Databases"
-flags  = ["--create-empty-src-dirs"]
+remote = "nas:whatsapp/${SAMBA_USER}/Databases"
 
 [[jobs]]
 name   = "whatsapp-media"
 type   = "retained_copy"
 local  = "~/storage/shared/Android/media/com.whatsapp/WhatsApp/Media"
-remote = "smb0:data/whatsapp/dada/Media"
+remote = "nas:whatsapp/${SAMBA_USER}/Media"
 local_retention_days = 365
 exclude = ["**/.pending", "**/private/**"]
-flags   = ["--create-empty-src-dirs"]
 
 [[jobs]]
 name   = "dcim"
 type   = "retained_copy"
 local  = "~/storage/shared/DCIM"
-remote = "smb0:data/immich/dada/DCIM"
+remote = "nas:immich/${SAMBA_USER}/DCIM"
 local_retention_days = 31
-flags   = ["--create-empty-src-dirs"]
 
 [[jobs]]
 name   = "screenshots"
 type   = "retained_copy"
 local  = "~/storage/shared/Pictures/Screenshots"
-remote = "smb0:data/immich02/dada/android/Screenshots"
+remote = "nas:immich02/${SAMBA_USER}/android/Screenshots"
 local_retention_days = 31
 
 [[jobs]]
 name   = "cubecallacr"
 type   = "retained_copy"
 local  = "~/storage/shared/Documents/CubeCallRecorder/All"
-remote = "smb0:data/cubecallACR/dada"
+remote = "nas:cubecallACR/${SAMBA_USER}"
 local_retention_days = 90
 
 [[jobs]]
 name   = "androidfs"
 type   = "copy"
 local  = "~/storage/shared"
-remote = "smb0:data/androidfs/dada"
+remote = "nas:androidfs/${SAMBA_USER}"
 exclude = [
   "Android/data/**",
   "Android/obb/**",
@@ -83,7 +75,6 @@ exclude = [
   "Documents/CubeCallRecorder/**",
   "Documents/obsidian/**",
 ]
-flags = ["--copy-links", "--create-empty-src-dirs"]
 [[jobs.keep_latest]]
 glob = "Signal/*.backup*"
 keep = 2

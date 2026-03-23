@@ -27,9 +27,9 @@ compute_screencasts_remote() {
     return
   fi
   if [[ "$samba_user" == "dada" ]]; then
-    echo "smb0:data/immich01/Screencasts"
+    echo "immich01/Screencasts"
   else
-    echo "smb0:data/immich02/${samba_user}/desktop/Screencasts"
+    echo "immich02/${samba_user}/desktop/Screencasts"
   fi
 }
 
@@ -54,9 +54,13 @@ if [[ -f "$PROFILE_ENV" ]]; then
 fi
 
 SAMBA_USER="${SAMBA_USER:-$(compute_samba_user)}"
+SAMBA_USERNAME="${SAMBA_USERNAME:-$SAMBA_USER}"
+SAMBA_HOST="${SAMBA_HOST:-nas.lan}"
+SAMBA_SHARE="${SAMBA_SHARE:-data}"
+SAMBA_PASSWORD_ENV="${SAMBA_PASSWORD_ENV:-SAMBA_PASSWORD}"
 SCREENCASTS_REMOTE="${SCREENCASTS_REMOTE:-$(compute_screencasts_remote "$SAMBA_USER")}"
 
-export REPO_ROOT USER_HOME="${HOME}" USER_NAME="${USER}" SAMBA_USER SCREENCASTS_REMOTE
+export REPO_ROOT USER_HOME="${HOME}" USER_NAME="${USER}" SAMBA_HOST SAMBA_SHARE SAMBA_USER SAMBA_USERNAME SAMBA_PASSWORD_ENV SCREENCASTS_REMOTE
 
 mkdir -p "$(dirname "$OUT")"
 envsubst <"$TEMPLATE" >"$OUT"

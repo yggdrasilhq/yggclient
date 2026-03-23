@@ -17,7 +17,7 @@ readonly KMONAD_URL="https://github.com/kmonad/kmonad/releases/download/${KMONAD
 readonly YGGSYNC_DEFAULT_BIN="${HOME}/.local/bin/yggsync"
 readonly YGGSYNC_FETCH_SCRIPT="${REPO_ROOT}/scripts/yggsync/fetch-yggsync.sh"
 readonly YGGSYNC_RENDER_SCRIPT="${REPO_ROOT}/scripts/yggsync/render-config.sh"
-readonly YGGSYNC_DEFAULT_VERSION="${YGGSYNC_VERSION:-v0.2.2}"
+readonly YGGSYNC_DEFAULT_VERSION="${YGGSYNC_VERSION:-v0.3.0}"
 
 # --- Color Definitions ---
 readonly RED='\033[0;31m'
@@ -79,9 +79,9 @@ compute_samba_user() {
 compute_screencasts_remote() {
     local samba_user="$1"
     if [[ "$samba_user" == "dada" ]]; then
-        echo "smb0:data/immich01/Screencasts"
+        echo "immich01/Screencasts"
     else
-        echo "smb0:data/immich02/${samba_user}/desktop/Screencasts"
+        echo "immich02/${samba_user}/desktop/Screencasts"
     fi
 }
 
@@ -226,22 +226,6 @@ ensure_dependencies() {
                 success "kmonad installed to ${KMONAD_PATH}"
             else
                 warning "Failed to download kmonad from ${KMONAD_URL}; install manually."
-            fi
-        fi
-    fi
-
-    # rclone is required by yggsync jobs.
-    if [[ "$unit_name" == "ygg-yggsync-desktop.service" || "$unit_name" == "ygg-yggsync-desktop.timer" ]]; then
-        if ! command -v rclone >/dev/null 2>&1; then
-            if [[ "$NON_INTERACTIVE" -eq 1 ]]; then
-                resp="y"
-            else
-                read -rp "--> rclone not found. Install via apt now? [y/N] " resp
-            fi
-            if [[ "$resp" =~ ^[Yy]$ ]]; then
-                sudo apt-get update && sudo apt-get install -y rclone
-            else
-                warning "rclone missing; yggsync jobs will fail until installed."
             fi
         fi
     fi

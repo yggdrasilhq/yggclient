@@ -6,7 +6,7 @@ YGG_CLIENT_DIR_DEFAULT="$(cd "$SCRIPT_DIR_SELF/../.." && pwd)"
 YGG_CLIENT_DIR="${YGG_CLIENT_DIR:-$YGG_CLIENT_DIR_DEFAULT}"
 BOOT_LOG="$HOME/.local/state/ygg_client/termux-boot.log"
 LOCAL_BIN="$HOME/.local/bin"
-YGGSYNC_TARGET_VERSION="${YGGSYNC_VERSION:-v0.2.2}"
+YGGSYNC_TARGET_VERSION="${YGGSYNC_VERSION:-v0.3.0}"
 
 log() {
   printf '%s - %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*" >> "$BOOT_LOG"

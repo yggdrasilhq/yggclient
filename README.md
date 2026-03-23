@@ -1,33 +1,33 @@
 # yggclient
 
-Public endpoint automation for the Yggdrasil client stack.
+Client-side automation for Yggdrasil endpoints.
 
-This repo owns the endpoint-side pieces:
+This repo owns:
 
-- `yggsync` wrapper scripts and templates
-- Android Termux install/update helpers
-- desktop service and timer templates
+- `yggsync` fetch/render/install wrappers
+- Android Termux setup, schedulers, and shortcuts
+- desktop service/timer installation helpers
 - workstation utility scripts
 
 Boundaries:
 
 - `yggsync` owns the sync engine and TOML schema
 - `yggdrasil` owns ISO/build logic
-- `ygg-docs` owns long-form docs
+- `ygg-docs` owns long-form documentation
 
-What follows is the operator README for running `yggsync` through `yggclient`.
+This README is the operator guide for running `yggsync` through `yggclient`.
 
 ## Layout
 
 - [`scripts/yggsync/fetch-yggsync.sh`](/home/pi/gh/yggclient/scripts/yggsync/fetch-yggsync.sh): fetch Linux `yggsync`
-- [`scripts/yggsync/render-config.sh`](/home/pi/gh/yggclient/scripts/yggsync/render-config.sh): render `~/.config/ygg_sync.toml` from a template
+- [`scripts/yggsync/render-config.sh`](/home/pi/gh/yggclient/scripts/yggsync/render-config.sh): render `~/.config/ygg_sync.toml`
 - [`scripts/yggsync/run-desktop-yggsync.sh`](/home/pi/gh/yggclient/scripts/yggsync/run-desktop-yggsync.sh): desktop wrapper
 - [`config/yggsync/desktop/ygg_sync.toml.template`](/home/pi/gh/yggclient/config/yggsync/desktop/ygg_sync.toml.template): desktop template
 - [`android/config/ygg_sync.toml.template`](/home/pi/gh/yggclient/android/config/ygg_sync.toml.template): Android template
-- [`android/scripts/update-public-stack.sh`](/home/pi/gh/yggclient/android/scripts/update-public-stack.sh): boot-time repo and binary refresh
 - [`android/scripts/setup-android-sync.sh`](/home/pi/gh/yggclient/android/scripts/setup-android-sync.sh): Android scheduler and shortcut setup
+- [`android/scripts/update-public-stack.sh`](/home/pi/gh/yggclient/android/scripts/update-public-stack.sh): boot-time refresh
 
-## yggsync Quick Start
+## Quick Start
 
 Install the binary:
 
@@ -35,7 +35,7 @@ Install the binary:
 bash scripts/yggsync/fetch-yggsync.sh
 ```
 
-Render the desktop config:
+Render a desktop config:
 
 ```bash
 bash scripts/yggsync/render-config.sh desktop
@@ -53,20 +53,34 @@ Dry-run selected jobs:
 ~/.local/bin/yggsync -config ~/.config/ygg_sync.toml -jobs screenshots-desktop,screencasts -dry-run
 ```
 
-## Writing yggsync Config
+## Config Model
 
-`yggsync` reads `~/.config/ygg_sync.toml` by default.
-Start from one of the tracked templates:
+`yggsync` now syncs directly to local paths and SMB shares.
+There is no `rclone` dependency in the main stack.
+
+Tracked templates:
 
 - desktop: [`config/yggsync/desktop/ygg_sync.toml.template`](/home/pi/gh/yggclient/config/yggsync/desktop/ygg_sync.toml.template)
 - Android: [`android/config/ygg_sync.toml.template`](/home/pi/gh/yggclient/android/config/ygg_sync.toml.template)
 
 Important top-level keys:
 
-- `rclone_binary`
-- `rclone_config`
 - `lock_file`
-- `default_flags`
+- `worktree_state_dir`
+- `[[targets]]`
+- `[[jobs]]`
+
+Each `[[targets]]` block defines a named backend. For SMB:
+
+```toml
+[[targets]]
+name = "nas"
+type = "smb"
+host = "nas.lan"
+share = "data"
+username = "alice"
+password_env = "SAMBA_PASSWORD"
+```
 
 Each `[[jobs]]` block needs:
 
@@ -75,30 +89,24 @@ Each `[[jobs]]` block needs:
 - `local`
 - `remote`
 
-Useful optional keys:
+Supported job types:
 
-- `flags`
-- `include`
-- `exclude`
-- `filter_rules`
-- `resync_on_exit`
-- `resync_flags`
-- `local_retention_days`
-- `timeout_seconds`
+- `copy`
+- `sync`
+- `retained_copy`
+- `worktree`
 
-Use `filter_rules` when plain `include` and `exclude` globs are not enough.
-Do not mix `filter_rules` with `include` or `exclude` in the same job.
+Use `worktree` for a local Obsidian vault that syncs against a central SMB repository in an `SVN`-like model.
+Use direct SMB-mounted vaults only when you are deliberately operating with one live machine at a time.
 
-Example Obsidian job for SMB:
+Example Android Obsidian job:
 
 ```toml
 [[jobs]]
 name = "obsidian"
-type = "bisync"
+type = "worktree"
 local = "~/storage/shared/Documents/obsidian"
-remote = "smb0:data/smbfs/dada/obsidian"
-resync_on_exit = [7]
-resync_flags = ["--resync"]
+remote = "nas:smbfs/dada/obsidian"
 filter_rules = [
   "- **/.obsidian/**",
   "- **/.trash/**",
@@ -106,36 +114,29 @@ filter_rules = [
   "- [A-Za-z0-9_][A-Za-z0-9_][A-Za-z0-9_][A-Za-z0-9_][A-Za-z0-9_][A-Za-z0-9_]~[A-Za-z0-9].*",
   "- **/[A-Za-z0-9_][A-Za-z0-9_][A-Za-z0-9_][A-Za-z0-9_][A-Za-z0-9_][A-Za-z0-9_]~[A-Za-z0-9].*",
 ]
-flags = [
-  "--create-empty-src-dirs",
-  "--resilient",
-  "--recover",
-  "--conflict-loser", "pathname",
-  "--max-delete", "90",
-]
 ```
 
-Those last filters exclude SMB DOS 8.3 aliases such as `AW5E46~3.MD`, which can otherwise poison `bisync` state on some shares.
+Those last filters exclude DOS 8.3 alias names exposed by some SMB shares.
 
 ## How yggclient Autosets It
 
-There are two supported paths.
-
-Environment-first:
+Environment-first flow:
 
 1. Copy [`config/profiles.example.env`](/home/pi/gh/yggclient/config/profiles.example.env) to `config/profiles.local.env`.
-2. Set private values there, especially `SAMBA_USER` and `SCREENCASTS_REMOTE` when needed.
+2. Set `SAMBA_HOST`, `SAMBA_SHARE`, `SAMBA_USER`, and `SCREENCASTS_REMOTE`.
+   If the SMB login name differs from the path-owner name, also set `SAMBA_USERNAME`.
 3. Render the config:
 
 ```bash
 bash scripts/yggsync/render-config.sh desktop
 ```
 
-TOML-first:
+TOML-first flow:
 
 1. Copy [`yggclient.example.toml`](/home/pi/gh/yggclient/yggclient.example.toml) to `yggclient.local.toml`.
-2. Set `[sync].samba_user`, `[sync].screencasts_remote`, and other local values.
-3. Generate the legacy env file:
+2. Set `[sync].samba_host`, `[sync].samba_share`, `[sync].samba_user`, and related values.
+   Set `[sync].samba_username` too if SMB auth uses a different account name.
+3. Generate the compatibility env file:
 
 ```bash
 python3 scripts/render-profile-env.py
@@ -147,9 +148,7 @@ python3 scripts/render-profile-env.py
 bash scripts/yggsync/render-config.sh desktop
 ```
 
-Desktop install flow:
-
-- [`scripts/install/install-service.sh`](/home/pi/gh/yggclient/scripts/install/install-service.sh) now renders `~/.config/ygg_sync.toml` automatically when you install the desktop `yggsync` units and the config does not already exist.
+The desktop installer at [`scripts/install/install-service.sh`](/home/pi/gh/yggclient/scripts/install/install-service.sh) will render `~/.config/ygg_sync.toml` automatically when the desktop units are installed and the file does not already exist.
 
 ## Android Stack
 
@@ -164,26 +163,28 @@ bash android/scripts/setup-android-sync.sh
 What the Android stack does:
 
 - installs or refreshes `~/.local/bin/yggsync`
-- uses the Android template at `~/.config/ygg_sync.toml`
+- copies the Android template to `~/.config/ygg_sync.toml` if needed
 - schedules fast and bulk jobs through `termux-job-scheduler`
-- refreshes Termux widgets and dynamic shortcuts
-- can auto-update the public stack on boot
+- refreshes Termux widget and dynamic shortcut copies
+- can refresh the public checkout and `yggsync` release binary on boot
 
-The boot updater now skips fetching a new binary when the installed `yggsync` version already matches the configured target version.
-
-## Recovery
-
-Normal run:
+For native SMB jobs, ensure Termux has your NAS password in the environment, for example:
 
 ```bash
-~/.local/bin/yggsync -config ~/.config/ygg_sync.toml -jobs obsidian
+export SAMBA_PASSWORD='your-nas-password'
 ```
 
-Manual recovery after a bisync state failure:
+The `sync-obsidian-resync` shortcut name is kept for compatibility, but it now runs a native `worktree` sync instead of an old `rclone bisync` recovery flow.
 
-```bash
-~/.local/bin/yggsync -config ~/.config/ygg_sync.toml -jobs obsidian --resync --force-bisync
-```
+## Obsidian Usage
+
+Two workflows are supported:
+
+- direct SMB-mounted vault, if you personally keep exactly one live machine active at a time
+- local vault plus `worktree` sync, if you want safer handoff semantics and explicit conflict detection
+
+Your current direct-SMB workflow is acceptable under the first model.
+The `worktree` path exists for the cases where you want less filesystem risk without giving up a central NAS repository.
 
 ## License
 

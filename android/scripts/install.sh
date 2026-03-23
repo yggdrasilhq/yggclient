@@ -6,7 +6,6 @@ YGG_DIR_DEFAULT="$(cd "$SCRIPT_DIR_SELF/../.." && pwd)"
 YGG_DIR="${YGG_CLIENT_DIR:-$YGG_DIR_DEFAULT}"
 BOOT_SCRIPT_DIR="$HOME/.termux/boot"
 STATE_DIR="$HOME/.local/state/ygg_client"
-RCLONE_CONFIG="$HOME/.config/rclone/rclone.conf"
 ANDROID_DIR="$YGG_DIR/android"
 ANDROID_BIN="$ANDROID_DIR/bin/yggsync"
 LOCAL_BIN="$HOME/.local/bin"
@@ -47,8 +46,6 @@ ensure_pkg termux-api
 ensure_pkg termux-tools
 ensure_pkg termux-boot
 ensure_pkg termux-widget
-ensure_pkg rclone
-
 log "Ensuring directories..."
 mkdir -p "$STATE_DIR" "$BOOT_SCRIPT_DIR" "$SHORTCUTS_WIDGET" "$DYNAMIC_SHORTCUTS" "$LOCAL_BIN"
 
@@ -80,17 +77,7 @@ log "Ensuring bash aliases (ll, hh)..."
 ensure_alias "alias ll='ls -alF'"
 ensure_alias "alias hh=\"cat ~/.bash_history | grep\""
 
-log "Rclone config check..."
-if [ ! -f "$RCLONE_CONFIG" ]; then
-  log "rclone config not found at $RCLONE_CONFIG"
-  if prompt_yes "Run rclone config now?"; then
-    rclone config
-  else
-    log "Skip rclone config; remember to create $RCLONE_CONFIG with remote 'smb0' pointing to smb://<NAS>/smbfs"
-  fi
-fi
-
 log "Initial job scheduling..."
 bash "$TERMUX_BOOT_SCRIPT" || log "Warning: job scheduling script returned non-zero"
 
-log "Done. Paths expect obsidian at remote path 'data/obsidian' on remote 'smb0' (pointing to smbfs/dada/obsidian)."
+log "Done. Review ~/.config/ygg_sync.toml and ensure SAMBA_PASSWORD is exported in your Termux environment."

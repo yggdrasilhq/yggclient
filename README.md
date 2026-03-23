@@ -351,6 +351,26 @@ export SAMBA_PASSWORD='your-password'
 bash scripts/install/install-service.sh
 ```
 
+Mounted-share variant:
+
+If the laptop already keeps the NAS mounted for day-to-day work, you can render the
+desktop config once and then replace `nas:...` remote values in `~/.config/ygg_sync.toml`
+with absolute mounted paths such as `/run/smb4k/pi/192.168.0.213/data/...`.
+
+When you do that, also guard the user service so it only runs while the NAS path is
+actually mounted:
+
+```ini
+[Unit]
+ConditionPathIsMountPoint=/run/smb4k/pi/192.168.0.213/data
+```
+
+On `jojo`, this guard lives in:
+
+```text
+~/.config/systemd/user/ygg-yggsync-desktop.service.d/mount-guard.conf
+```
+
 ### Android Example From Fresh Termux Install
 
 This is the shortest realistic phone flow.

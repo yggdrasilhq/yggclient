@@ -21,3 +21,11 @@ Use `config/profiles.local.env` (gitignored) to inject private infrastructure va
 Keep `config/profiles.example.env` generalized.
 The TOML source of truth for new tooling is `yggclient.local.toml` (gitignored), with
 `python3 scripts/render-profile-env.py` generating the shell profile used by legacy scripts.
+
+## README Contract
+
+- Treat `README.md` as the operator manual, not a repository ornament.
+- Keep the fastest install and fastest update path easy to find near the top.
+- Prefer examples that look like real endpoint work: render, dry-run, schedule, recover.
+- When behavior changes in a way operators will notice, update the README in the same change.
+- If a changelog or release note exists, use it as the second user-facing surface: explain what improved and why it matters operationally.

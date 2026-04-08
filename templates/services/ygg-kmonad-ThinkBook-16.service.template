@@ -1,0 +1,13 @@
+[Unit]
+Description=Yggdrasil kmonad keyboard config (ThinkBook 16)
+Documentation=https://github.com/kmonad/kmonad
+
+[Service]
+Type=simple
+ExecStart=${KMONAD_PATH} ${REPO_ROOT}/config/kmonad/thinkbook-16.kbd
+Restart=always
+RestartSec=3
+User=root
+
+[Install]
+WantedBy=multi-user.target

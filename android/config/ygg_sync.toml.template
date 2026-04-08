@@ -1,0 +1,89 @@
+# Render this to ~/.config/ygg_sync.toml on the phone and adjust host/user/path values as needed.
+lock_file = "~/.local/state/yggsync.lock"
+worktree_state_dir = "~/.local/state/yggsync/worktrees"
+
+[[targets]]
+name = "nas"
+type = "smb"
+host = "${SAMBA_HOST}"
+share = "${SAMBA_SHARE}"
+username = "${SAMBA_USERNAME}"
+password_env = "${SAMBA_PASSWORD_ENV}"
+
+[[jobs]]
+name   = "obsidian"
+type   = "worktree"
+local  = "~/storage/shared/Documents/obsidian"
+remote = "nas:netshare/${SAMBA_USER}/obsidian"
+filter_rules = [
+  "- **/.obsidian/**",
+  "- **/.trash/**",
+  "- **/materials/generated/**",
+  "- **/*.conflict*",
+  "- [A-Za-z0-9_][A-Za-z0-9_][A-Za-z0-9_][A-Za-z0-9_][A-Za-z0-9_][A-Za-z0-9_]~[A-Za-z0-9].*",
+  "- **/[A-Za-z0-9_][A-Za-z0-9_][A-Za-z0-9_][A-Za-z0-9_][A-Za-z0-9_][A-Za-z0-9_]~[A-Za-z0-9].*",
+]
+
+[[jobs]]
+name   = "whatsapp-backups"
+type   = "copy"
+local  = "~/storage/shared/Android/media/com.whatsapp/WhatsApp/Databases"
+remote = "nas:whatsapp/${SAMBA_USER}/Databases"
+
+[[jobs]]
+name   = "whatsapp-media"
+type   = "retained_copy"
+local  = "~/storage/shared/Android/media/com.whatsapp/WhatsApp/Media"
+remote = "nas:whatsapp/${SAMBA_USER}/Media"
+local_retention_days = 365
+exclude = ["**/.pending", "**/private/**"]
+
+[[jobs]]
+name   = "dcim"
+type   = "retained_copy"
+local  = "~/storage/shared/DCIM"
+remote = "nas:immich/${SAMBA_USER}/DCIM"
+local_retention_days = 31
+
+[[jobs]]
+name   = "screenshots"
+type   = "retained_copy"
+local  = "~/storage/shared/Pictures/Screenshots"
+remote = "nas:immich02/${SAMBA_USER}/android/Screenshots"
+local_retention_days = 31
+
+[[jobs]]
+name   = "cubecallacr"
+type   = "retained_copy"
+local  = "~/storage/shared/Documents/CubeCallRecorder/All"
+remote = "nas:cubecallACR/${SAMBA_USER}"
+local_retention_days = 90
+
+[[jobs]]
+name   = "androidfs"
+type   = "copy"
+local  = "~/storage/shared"
+remote = "nas:androidfs/${SAMBA_USER}"
+exclude = [
+  "Android/data/**",
+  "Android/obb/**",
+  "Android/media/com.whatsapp/WhatsApp/**",
+  "DCIM/**",
+  "Pictures/Screenshots/**",
+  "Pictures/.thumbnails/**",
+  "CubeACR/**",
+  "Documents/CubeCallRecorder/**",
+  "Documents/obsidian/**",
+]
+[[jobs.keep_latest]]
+glob = "Signal/*.backup*"
+keep = 2
+[[jobs.keep_latest]]
+glob = "Signal/Backups/*.backup*"
+keep = 2
+[[jobs.keep_latest]]
+glob = "Download/*sms-backup*.xml"
+keep = 2
+[[jobs.keep_latest]]
+glob = "Download/*calllog*.xml"
+keep = 2

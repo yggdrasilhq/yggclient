@@ -1,0 +1,15 @@
+[Unit]
+Description=Yggdrasil ZFS shift-sync replication (pull profile)
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=/etc/default/ygg-shift-sync-pull
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+EnvironmentFile=-/etc/default/ygg-shift-sync-pull
+ExecStart=/usr/bin/flock -n /run/ygg-shift-sync.lock ${REPO_ROOT}/scripts/zfs/shift-sync.sh
+
+[Install]
+WantedBy=multi-user.target

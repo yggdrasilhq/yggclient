@@ -1,0 +1,5 @@
+Acquire::http::Proxy "http://apt-cache.example:3142";
+Acquire::https::Proxy "http://apt-cache.example:3142";
+# Avoid proxy loops when the cache host updates itself
+Acquire::http::Proxy::apt-cache.example "DIRECT";
+Acquire::https::Proxy::apt-cache.example "DIRECT";

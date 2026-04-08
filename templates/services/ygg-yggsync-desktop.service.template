@@ -1,0 +1,14 @@
+[Unit]
+Description=Yggdrasil desktop backup/sync via yggsync
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+Environment=YGGSYNC_BIN=${USER_HOME}/.local/bin/yggsync
+Environment=YGGSYNC_CONFIG=${USER_HOME}/.config/ygg_sync.toml
+Environment=JOBS=screenshots-desktop,screencasts,downloads-to-nextcloud
+ExecStart=${REPO_ROOT}/scripts/yggsync/run-desktop-yggsync.sh
+
+[Install]
+WantedBy=default.target

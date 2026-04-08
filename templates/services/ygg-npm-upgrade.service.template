@@ -1,0 +1,14 @@
+[Unit]
+Description=Yggdrasil NPM Global Upgrade Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# Wrapper cleans hidden dot dirs (npm treats them as invalid packages) before updating.
+ExecStart=${REPO_ROOT}/scripts/npm/npm-upgrade-global.sh
+User=root
+SuccessExitStatus=0
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,15 @@
+[Unit]
+Description=Run gour-cert-renewal service daily
+
+[Timer]
+# Run twice daily at 4:05 and 16:05.
+OnCalendar=daily
+
+# Add a random delay of up to 1 hour to prevent thundering herd
+RandomizedDelaySec=3600
+
+# Run on boot if the last scheduled run was missed
+Persistent=true
+
+[Install]
+WantedBy=timers.target

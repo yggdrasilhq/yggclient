@@ -1,0 +1,18 @@
+[Unit]
+Description=Lego ACME client for gour.top (Porkbun DNS)
+Documentation=man:lego(1) https://go-acme.github.io/lego/
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/letsencrypt/gour.top/lego/lego.local.env
+ExecStart=/etc/letsencrypt/gour.top/lego/run.sh
+StandardOutput=journal+console
+StandardError=journal+console
+
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target

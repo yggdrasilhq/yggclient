@@ -1,0 +1,12 @@
+[Unit]
+Description=Yggdrasil ZFS shift-sync pull timer
+
+[Timer]
+OnBootSec=20m
+OnUnitActiveSec=6h
+RandomizedDelaySec=15m
+Persistent=true
+Unit=ygg-shift-sync-pull.service
+
+[Install]
+WantedBy=timers.target

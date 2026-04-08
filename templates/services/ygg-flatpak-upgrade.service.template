@@ -1,0 +1,12 @@
+[Unit]
+Description=Yggdrasil Flatpak Upgrade Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/flatpak update -y
+SuccessExitStatus=0
+
+[Install]
+WantedBy=default.target

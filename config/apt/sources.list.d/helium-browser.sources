@@ -1,0 +1,5 @@
+Types: deb
+URIs: https://arvaidasre.github.io/helium-browser-deb/apt/
+Suites: stable
+Components: main 
+Signed-By: 

@@ -1,0 +1,87 @@
+# yggsync desktop template
+# Adjust the SMB host/share and paths to match your NAS layout.
+
+lock_file = "~/.local/state/yggsync.lock"
+worktree_state_dir = "~/.local/state/yggsync/worktrees"
+
+[[targets]]
+name = "nas"
+type = "smb"
+host = "${SAMBA_HOST}"
+share = "${SAMBA_SHARE}"
+username = "${SAMBA_USERNAME}"
+password_env = "${SAMBA_PASSWORD_ENV}"
+
+[[jobs]]
+name   = "screenshots-desktop"
+type   = "copy"
+local  = "~/Pictures/Screenshots"
+remote = "nas:immich02/${SAMBA_USER}/desktop/Screenshots"
+
+[[jobs]]
+name   = "screencasts"
+type   = "copy"
+local  = "~/Screencasts"
+remote = "nas:${SCREENCASTS_REMOTE}"
+
+[[jobs]]
+name   = "downloads-to-nextcloud"
+type   = "copy"
+local  = "~/Downloads"
+remote = "nas:netshare/${SAMBA_USER}/Downloads"
+include = [
+  "session-buddy-export-*",
+  "backup_to_nextcloud/**",
+]
+exclude = ["*"]
+[[jobs.keep_latest]]
+glob = "session-buddy-export-*"
+keep = 1
+
+[[jobs]]
+name   = "flatpak-system"
+type   = "copy"
+local  = "/var/lib/flatpak"
+remote = "nas:netshare/${SAMBA_USER}/flatpak/var/lib/flatpak"
+
+[[jobs]]
+name   = "flatpak-user"
+type   = "copy"
+local  = "~/.local/share/flatpak"
+remote = "nas:netshare/${SAMBA_USER}/flatpak/home/.local/share/flatpak"
+
+[[jobs]]
+name   = "flatpak-app-data"
+type   = "copy"
+local  = "~/.var/app"
+remote = "nas:netshare/${SAMBA_USER}/flatpak/home/.var/app"
+
+[[jobs]]
+name   = "flatpak-etc"
+type   = "copy"
+local  = "/etc/flatpak"
+remote = "nas:netshare/${SAMBA_USER}/flatpak/etc/flatpak"
+
+[[jobs]]
+name   = "home-config"
+type   = "copy"
+local  = "~/.config"
+remote = "nas:netshare/${SAMBA_USER}/flatpak/home/.config"
+
+[[jobs]]
+name   = "home-local-share"
+type   = "copy"
+local  = "~/.local/share"
+remote = "nas:netshare/${SAMBA_USER}/flatpak/home/.local/share"
+
+[[jobs]]
+name   = "home-local-state"
+type   = "copy"
+local  = "~/.local/state"
+remote = "nas:netshare/${SAMBA_USER}/flatpak/home/.local/state"
+
+[[jobs]]
+name   = "home-var"
+type   = "copy"
+local  = "~/.var"
+remote = "nas:netshare/${SAMBA_USER}/flatpak/home/.var"

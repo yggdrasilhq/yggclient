@@ -255,6 +255,6 @@ fi
 log_message "Certificate management script finished."
 
 # After a successful renewal, upload the new certificates to Infisical.
-/usr/local/bin/upload-certs.sh "${CERT_PRIMARY_DOMAIN}"
+"$SCRIPT_DIR/upload-cert.sh" "${CERT_PRIMARY_DOMAIN}"
 
 exit 0

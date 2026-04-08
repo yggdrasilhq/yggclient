@@ -1,6 +1,6 @@
 [Unit]
 Description=Yggdrasil lego ACME certificate renewal
-Documentation=man:lego(1) https://go-acme.github.io/lego/
+Documentation=https://go-acme.github.io/lego/
 After=network-online.target
 Wants=network-online.target
 

@@ -35,6 +35,7 @@ LEGO_EXEC_NAME="${LEGO_EXEC_NAME:-lego}"
 LEGO_EXEC_PATH="${LEGO_INSTALL_DIR}/${LEGO_EXEC_NAME}"
 DNS_RESOLVERS="${LEGO_DNS_RESOLVERS:-1.1.1.1:53,8.8.8.8:53}"
 NGINX_RELOAD_COMMAND="${NGINX_RELOAD_COMMAND:-systemctl reload nginx}"
+LEGO_RUN_TIMEOUT_SECONDS="${LEGO_RUN_TIMEOUT_SECONDS:-1800}"
 
 if [[ "$LEGO_DNS_PROVIDER" == "porkbun" ]]; then
     : "${PORKBUN_SECRET_API_KEY:?PORKBUN_SECRET_API_KEY is required for porkbun}"
@@ -204,10 +205,15 @@ original_dir=$(pwd)
 
 log_message "Executing: ${LEGO_EXEC_PATH} ${lego_args[*]} run"
 
-if ! "${LEGO_EXEC_PATH}" "${lego_args[@]}" run; then
-    log_message "ERROR: Lego 'run' command failed."
+if ! timeout --foreground "${LEGO_RUN_TIMEOUT_SECONDS}" "${LEGO_EXEC_PATH}" "${lego_args[@]}" run; then
+    rc=$?
+    if [[ "$rc" -eq 124 ]]; then
+        log_message "ERROR: Lego 'run' timed out after ${LEGO_RUN_TIMEOUT_SECONDS}s. This prevents long-lived ACME retry sleeps from wedging the systemd unit."
+    else
+        log_message "ERROR: Lego 'run' command failed."
+    fi
     # cd "$original_dir" # Optional: return to original dir on error
-    exit 1
+    exit "$rc"
 fi
 
 log_message "Lego 'run' command completed successfully."

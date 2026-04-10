@@ -30,6 +30,7 @@ load_local_env || true
 
 INFISICAL_PROJECT_ID="${INFISICAL_PROJECT_ID:-${INFISICAL_INFRA_PROJECT_ID:-}}"
 INFISICAL_TOKEN="${INFISICAL_TOKEN:-${INFISICAL_INFRA_TOKEN:-}}"
+INFISICAL_API_URL="${INFISICAL_API_URL:-}"
 
 # --- Pre-flight Checks ---
 if [[ -z "${INFISICAL_PROJECT_ID}" || -z "${INFISICAL_TOKEN}" ]]; then
@@ -42,6 +43,10 @@ if [ "$#" -ne 1 ]; then echo "Usage: $0 <domain>"; exit 1; fi
 DOMAIN="$1"
 LE_CERTS_PATH="/etc/letsencrypt/$DOMAIN/certificates"
 INFISICAL_ENV="${INFISICAL_ENV:-prod}"
+INFISICAL_DOMAIN_ARGS=()
+if [[ -n "${INFISICAL_API_URL}" ]]; then
+    INFISICAL_DOMAIN_ARGS+=("--domain=${INFISICAL_API_URL}")
+fi
 
 # --- Main Logic ---
 echo "Herald: Starting TRUE certificate upload for $DOMAIN to project $INFISICAL_PROJECT_ID..."
@@ -55,7 +60,7 @@ if ! [ -f "$PRIVKEY_FILE" ]; then echo "Herald: FATAL - Private key file not fou
 echo "Herald: Reading TRUE CONTENT from $PRIVKEY_FILE..."
 
 # THE TRUE INCANTATION: Use command substitution to embed the file's content.
-infisical secrets set --env="$INFISICAL_ENV" --projectId="$INFISICAL_PROJECT_ID" --token="$INFISICAL_TOKEN" "$SECRET_NAME_PRIVKEY=$(cat "$PRIVKEY_FILE")"
+infisical "${INFISICAL_DOMAIN_ARGS[@]}" secrets set --env="$INFISICAL_ENV" --projectId="$INFISICAL_PROJECT_ID" --token="$INFISICAL_TOKEN" "$SECRET_NAME_PRIVKEY=$(cat "$PRIVKEY_FILE")"
 if [ $? -ne 0 ]; then echo "Herald: FATAL - Failed to upload private key." >&2; exit 1; fi
 echo "Herald: Private key content uploaded successfully."
 
@@ -65,7 +70,7 @@ if ! [ -f "$FULLCHAIN_FILE" ]; then echo "Herald: FATAL - Full chain file not fo
 echo "Herald: Reading TRUE CONTENT from $FULLCHAIN_FILE..."
 
 # THE TRUE INCANTATION:
-infisical secrets set --env="$INFISICAL_ENV" --projectId="$INFISICAL_PROJECT_ID" --token="$INFISICAL_TOKEN" "$SECRET_NAME_FULLCHAIN=$(cat "$FULLCHAIN_FILE")"
+infisical "${INFISICAL_DOMAIN_ARGS[@]}" secrets set --env="$INFISICAL_ENV" --projectId="$INFISICAL_PROJECT_ID" --token="$INFISICAL_TOKEN" "$SECRET_NAME_FULLCHAIN=$(cat "$FULLCHAIN_FILE")"
 if [ $? -ne 0 ]; then echo "Herald: FATAL - Failed to upload full chain." >&2; exit 1; fi
 echo "Herald: Full chain content uploaded successfully."
 

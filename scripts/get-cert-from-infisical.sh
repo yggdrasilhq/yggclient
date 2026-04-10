@@ -30,6 +30,7 @@ load_local_env || true
 
 INFISICAL_PROJECT_ID="${INFISICAL_INFRA_PROJECT_ID:-${INFISICAL_PROJECT_ID:-}}"
 INFISICAL_TOKEN="${INFISICAL_INFRA_TOKEN:-${INFISICAL_TOKEN:-}}"
+INFISICAL_API_URL="${INFISICAL_API_URL:-}"
 
 # --- Arguments ---
 if [ "$#" -ne 4 ]; then echo "Usage: $0 <domain> <privkey_path> <fullchain_path> <reload_command>"; exit 1; fi
@@ -43,6 +44,10 @@ if [[ -z "${INFISICAL_PROJECT_ID}" || -z "${INFISICAL_TOKEN}" ]]; then echo "Kee
 
 # --- Configuration ---
 INFISICAL_ENV="${INFISICAL_ENV:-prod}"
+INFISICAL_DOMAIN_ARGS=()
+if [[ -n "${INFISICAL_API_URL}" ]]; then
+    INFISICAL_DOMAIN_ARGS+=("--domain=${INFISICAL_API_URL}")
+fi
 
 # --- Logic ---
 echo "Keeper: Starting certificate deployment for $DOMAIN."
@@ -56,8 +61,8 @@ SECRET_NAME_FULLCHAIN="LETSENCRYPT_${DOMAIN_UPPER}_FULLCHAIN"
 echo "Keeper: Fetching TRUE secrets from vault using --plain..."
 
 # YOUR DISCOVERY: The correct use of the --plain flag.
-/usr/bin/infisical secrets get --env="$INFISICAL_ENV" --projectId="$INFISICAL_PROJECT_ID" --token="$INFISICAL_TOKEN" --plain "$SECRET_NAME_PRIVKEY" > "$TMP_PRIVKEY"
-/usr/bin/infisical secrets get --env="$INFISICAL_ENV" --projectId="$INFISICAL_PROJECT_ID" --token="$INFISICAL_TOKEN" --plain "$SECRET_NAME_FULLCHAIN" > "$TMP_FULLCHAIN"
+/usr/bin/infisical "${INFISICAL_DOMAIN_ARGS[@]}" secrets get --env="$INFISICAL_ENV" --projectId="$INFISICAL_PROJECT_ID" --token="$INFISICAL_TOKEN" --plain "$SECRET_NAME_PRIVKEY" > "$TMP_PRIVKEY"
+/usr/bin/infisical "${INFISICAL_DOMAIN_ARGS[@]}" secrets get --env="$INFISICAL_ENV" --projectId="$INFISICAL_PROJECT_ID" --token="$INFISICAL_TOKEN" --plain "$SECRET_NAME_FULLCHAIN" > "$TMP_FULLCHAIN"
 echo "Keeper: True secrets fetched."
 
 # --- Idempotency Check & Deployment (This logic remains sound) ---

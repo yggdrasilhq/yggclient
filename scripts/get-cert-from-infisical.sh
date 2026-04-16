@@ -65,6 +65,27 @@ echo "Keeper: Fetching TRUE secrets from vault using --plain..."
 /usr/bin/infisical "${INFISICAL_DOMAIN_ARGS[@]}" secrets get --env="$INFISICAL_ENV" --projectId="$INFISICAL_PROJECT_ID" --token="$INFISICAL_TOKEN" --plain "$SECRET_NAME_FULLCHAIN" > "$TMP_FULLCHAIN"
 echo "Keeper: True secrets fetched."
 
+validate_pem_file() {
+    local file="$1"
+    local label="$2"
+    local expected_header="$3"
+
+    if [[ ! -s "$file" ]]; then
+        echo "Keeper: FATAL - $label fetch returned empty content. Refusing to deploy blank certificate material." >&2
+        exit 1
+    fi
+
+    if ! grep -q "^$expected_header" "$file"; then
+        echo "Keeper: FATAL - $label fetch did not return a valid PEM payload. Refusing deployment." >&2
+        echo "Keeper: First lines of invalid $label payload:" >&2
+        sed -n '1,10p' "$file" >&2 || true
+        exit 1
+    fi
+}
+
+validate_pem_file "$TMP_PRIVKEY" "private key" "-----BEGIN .*PRIVATE KEY-----"
+validate_pem_file "$TMP_FULLCHAIN" "full chain" "-----BEGIN CERTIFICATE-----"
+
 # --- Idempotency Check & Deployment (This logic remains sound) ---
 NEEDS_UPDATE=0
 if ! [ -f "$PRIVKEY_PATH" ] || ! diff -q "$PRIVKEY_PATH" "$TMP_PRIVKEY" >/dev/null; then NEEDS_UPDATE=1; fi

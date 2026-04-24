@@ -1,0 +1,43 @@
+[profiles.obsidian]
+min_battery = 50
+max_battery_temp_c = 39.5
+monitor_interval_seconds = 20
+notify = true
+
+[profiles.obsidian.scheduled]
+enabled = true
+network = "wifi"
+
+[profiles.obsidian.manual]
+enabled = true
+network = "wifi"
+
+[profiles.fast]
+min_battery = 50
+max_battery_temp_c = 39.5
+monitor_interval_seconds = 20
+notify = true
+
+[profiles.fast.scheduled]
+enabled = true
+network = "wifi"
+
+[profiles.fast.manual]
+enabled = true
+network = "wifi"
+
+[profiles.bulk]
+min_battery = 65
+max_battery_temp_c = 38.5
+monitor_interval_seconds = 20
+notify = true
+cellular_limit_bytes = 524288000
+
+[profiles.bulk.scheduled]
+enabled = true
+network = "wifi"
+allowed_weekdays = [0, 1, 2, 3, 4, 5, 6]
+
+[profiles.bulk.manual]
+enabled = true
+network = "wifi"

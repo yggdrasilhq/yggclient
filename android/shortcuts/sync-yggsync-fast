@@ -1,18 +1,22 @@
 #!/data/data/com.termux/files/usr/bin/bash
+set -u
 
-# Manual trigger for the guarded yggsync fast job wrapper.
-SCRIPT_DIR_SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-YGG_CLIENT_DIR_DEFAULT="$(cd "$SCRIPT_DIR_SELF/../.." && pwd)"
-YGG_CLIENT_DIR="${YGG_CLIENT_DIR:-$YGG_CLIENT_DIR_DEFAULT}"
-RUNNER="$YGG_CLIENT_DIR/android/scripts/sync-yggsync-fast.sh"
+YGG_BIN="${YGG_BIN:-$HOME/.local/bin/yggsync}"
+CONFIG="${YGG_SYNC_CONFIG:-$HOME/.config/ygg_sync.toml}"
+RUNTIME="${YGG_SYNC_RUNTIME:-$HOME/.config/yggsync.runtime.toml}"
+PROFILE="${PROFILE:-obsidian}"
+JOBS="${JOBS:-obsidian}"
+WORKTREE_OP="${WORKTREE_OP:-sync}"
+LOG_DIR="$HOME/.local/state/yggsync"
+LOG_FILE="$LOG_DIR/manual-obsidian.log"
 
-termux-toast "yggsync fast: obsidian"
-"$RUNNER"
+mkdir -p "$LOG_DIR"
+
+termux-toast "yggsync obsidian: starting"
+"$YGG_BIN" obsidian -config "$CONFIG" -runtime "$RUNTIME" -reason manual -worktree-op "$WORKTREE_OP" >>"$LOG_FILE" 2>&1
 status=$?
 if [ $status -eq 0 ]; then
-  termux-toast "yggsync fast done"
-elif [ $status -eq 75 ]; then
-  termux-toast -b yellow -c black "yggsync fast deferred"
+  termux-toast "yggsync obsidian done"
 else
-  termux-toast -b red -c white "yggsync fast failed ($status)"
+  termux-toast -b red -c white "yggsync obsidian failed ($status)"
 fi

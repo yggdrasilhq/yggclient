@@ -6,17 +6,16 @@ CONFIG="${YGG_SYNC_CONFIG:-$HOME/.config/ygg_sync.toml}"
 RUNTIME="${YGG_SYNC_RUNTIME:-$HOME/.config/yggsync.runtime.toml}"
 PROFILE="${PROFILE:-bulk}"
 JOBS="${JOBS:-whatsapp-backups,whatsapp-media,dcim,screenshots,cubecallacr,androidfs}"
-CELLULAR_CAP_MIB="${CELLULAR_CAP_MIB:-500}"
 LOG_DIR="$HOME/.local/state/yggsync"
-LOG_FILE="$LOG_DIR/manual-${PROFILE}.log"
+LOG_FILE="$LOG_DIR/manual-${PROFILE}-force.log"
 
 mkdir -p "$LOG_DIR"
 
-termux-toast "yggsync ${PROFILE}: cellular capped at ${CELLULAR_CAP_MIB} MiB unless force"
-"$YGG_BIN" run -config "$CONFIG" -runtime "$RUNTIME" -profile "$PROFILE" -reason manual -jobs "$JOBS" >>"$LOG_FILE" 2>&1
+termux-toast "yggsync ${PROFILE}: force override enabled"
+"$YGG_BIN" run -config "$CONFIG" -runtime "$RUNTIME" -profile "$PROFILE" -reason manual -jobs "$JOBS" -force >>"$LOG_FILE" 2>&1
 status=$?
 if [ $status -eq 0 ]; then
-  termux-toast "yggsync ${PROFILE} done"
+  termux-toast "yggsync ${PROFILE} force run done"
 else
-  termux-toast -b red -c white "yggsync ${PROFILE} failed ($status)"
+  termux-toast -b red -c white "yggsync ${PROFILE} force run failed ($status)"
 fi

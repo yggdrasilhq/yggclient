@@ -55,9 +55,11 @@ echo "3. Navigate into the repository:"
 echo "   cd ~/gh/yggclient"
 echo "4. Run the Android setup script:"
 echo "   bash android/scripts/setup-android-sync.sh"
-echo "5. Set SMB credentials for yggsync, for example:"
+echo "5. Install the yggsync wrapper/core binaries, then run:"
+echo "   bash android/scripts/install.sh"
+echo "6. Set SMB credentials for yggsync, for example:"
 echo "   export SAMBA_PASSWORD='your-nas-password'"
-echo "6. CRITICAL: Disable Battery Optimization for Termux, Termux:API, and Termux:Boot in Android Settings."
+echo "7. CRITICAL: Disable Battery Optimization for Termux, Termux:API, and Termux:Boot in Android Settings."
 echo "-------------------------------------"
 
 exit 0

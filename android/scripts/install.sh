@@ -8,6 +8,7 @@ BOOT_SCRIPT_DIR="$HOME/.termux/boot"
 STATE_DIR="$HOME/.local/state/ygg_client"
 ANDROID_DIR="$YGG_DIR/android"
 ANDROID_BIN="$ANDROID_DIR/bin/yggsync"
+ANDROID_CORE_BIN="$ANDROID_DIR/bin/yggsync-core"
 LOCAL_BIN="$HOME/.local/bin"
 SCRIPT_DIR="$ANDROID_DIR/scripts"
 BOOT_SCRIPT_NAME="ygg-start-sync-jobs"
@@ -16,11 +17,25 @@ TERMUX_BOOT_SCRIPT="$SCRIPT_DIR/termux-boot-sync-jobs.sh"
 SHORTCUTS_SRC="$ANDROID_DIR/shortcuts"
 SHORTCUTS_WIDGET="$HOME/.shortcuts/tasks"
 DYNAMIC_SHORTCUTS="$HOME/.termux/widget/dynamic_shortcuts"
+CONFIG_PATH="${YGG_SYNC_CONFIG:-$HOME/.config/ygg_sync.toml}"
+RUNTIME_PATH="${YGG_SYNC_RUNTIME:-$HOME/.config/yggsync.runtime.toml}"
+RUNTIME_TEMPLATE="$ANDROID_DIR/config/yggsync.runtime.toml.template"
 
 log(){ printf "[%s] %s\n" "$(date '+%Y-%m-%d %H:%M:%S')" "$*"; }
 prompt_yes(){
   read -r -p "$1 [y/N]: " ans
   [[ $ans =~ ^[Yy]$ ]]
+}
+
+install_if_needed(){
+  src=$1
+  dest=$2
+  label=$3
+  if [ -e "$dest" ] && [ "$(readlink -f "$src")" = "$(readlink -f "$dest")" ]; then
+    log "$label already installed at $dest"
+    return 0
+  fi
+  install -m 0755 "$src" "$dest"
 }
 
 ensure_pkg(){
@@ -33,6 +48,13 @@ ensure_pkg(){
   fi
 }
 
+ensure_termux_api(){
+  if command -v termux-job-scheduler >/dev/null 2>&1 && command -v termux-toast >/dev/null 2>&1; then
+    return 0
+  fi
+  ensure_pkg termux-api
+}
+
 ensure_alias(){
   alias_line=$1
   rc="$HOME/.bashrc"
@@ -42,21 +64,32 @@ ensure_alias(){
 }
 
 log "Checking prerequisites..."
-ensure_pkg termux-api
-ensure_pkg termux-tools
-ensure_pkg termux-boot
-ensure_pkg termux-widget
+ensure_termux_api
 log "Ensuring directories..."
 mkdir -p "$STATE_DIR" "$BOOT_SCRIPT_DIR" "$SHORTCUTS_WIDGET" "$DYNAMIC_SHORTCUTS" "$LOCAL_BIN"
+log "Reminder: install the Termux:Boot and Termux:Widget Android apps from F-Droid or GitHub."
 
 log "Making scripts executable..."
 chmod +x "$SCRIPT_DIR"/*.sh "$ANDROID_DIR/shortcuts"/*
 
 if [ -x "$ANDROID_BIN" ]; then
-  log "Installing yggsync binary..."
-  install -m 0755 "$ANDROID_BIN" "$LOCAL_BIN/yggsync"
+  log "Installing yggsync wrapper binary..."
+  install_if_needed "$ANDROID_BIN" "$LOCAL_BIN/yggsync" "yggsync wrapper"
 else
-  log "yggsync binary not found at $ANDROID_BIN; run android/scripts/fetch-yggsync.sh to download from release or build from ~/gh/yggsync."
+  log "yggsync wrapper binary not found at $ANDROID_BIN; build or copy it first."
+fi
+
+if [ -x "$ANDROID_CORE_BIN" ]; then
+  log "Installing yggsync-core worktree binary..."
+  install_if_needed "$ANDROID_CORE_BIN" "$LOCAL_BIN/yggsync-core" "yggsync-core"
+elif [ ! -x "$LOCAL_BIN/yggsync-core" ]; then
+  log "Warning: yggsync-core is missing. Worktree jobs will not run until ~/.local/bin/yggsync-core exists."
+fi
+
+mkdir -p "$HOME/.config"
+if [ ! -f "$RUNTIME_PATH" ] && [ -f "$RUNTIME_TEMPLATE" ]; then
+  log "Installing default runtime policy..."
+  install -m 0644 "$RUNTIME_TEMPLATE" "$RUNTIME_PATH"
 fi
 
 log "Installing Termux:Boot script..."
@@ -73,11 +106,20 @@ for dir in "$SHORTCUTS_WIDGET" "$DYNAMIC_SHORTCUTS"; do
   chmod +x "$dir"/* || true
 done
 
+log "Cleaning obsolete wrapper leftovers..."
+rm -f \
+  "$HOME/.local/bin/yggsync-legacy-prewrapper" \
+  "$HOME/.local/state/yggsync/jobs/run-fast.sh" \
+  "$SHORTCUTS_WIDGET/sync-yggsync-fast.sh" \
+  "$SHORTCUTS_WIDGET/sync-yggsync-bulk.sh" \
+  "$DYNAMIC_SHORTCUTS/sync-yggsync-fast.sh" \
+  "$DYNAMIC_SHORTCUTS/sync-yggsync-bulk.sh"
+
 log "Ensuring bash aliases (ll, hh)..."
 ensure_alias "alias ll='ls -alF'"
 ensure_alias "alias hh=\"cat ~/.bash_history | grep\""
 
 log "Initial job scheduling..."
-bash "$TERMUX_BOOT_SCRIPT" || log "Warning: job scheduling script returned non-zero"
+YGG_AUTO_UPDATE=0 bash "$TERMUX_BOOT_SCRIPT" || log "Warning: job scheduling script returned non-zero"
 
-log "Done. Review ~/.config/ygg_sync.toml and ensure SAMBA_PASSWORD is exported in your Termux environment."
+log "Done. Review $CONFIG_PATH, $RUNTIME_PATH, and ensure SAMBA_PASSWORD is exported in your Termux environment."

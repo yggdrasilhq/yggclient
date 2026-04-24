@@ -1,7 +1,8 @@
 # Yggdrasil Client - Android Sync Setup
 
 This directory contains the Android-side Termux automation for `yggsync`.
-The current stack uses native `yggsync` SMB access, not `rclone`.
+The current stack uses a Go `yggsync` wrapper for policy, scheduling, notifications, and SMB uploads.
+`yggsync-core` remains as the worktree engine for notes/Obsidian jobs.
 
 ## Prerequisites
 
@@ -16,7 +17,10 @@ The current stack uses native `yggsync` SMB access, not `rclone`.
    ```
 6. **Install `yggsync`:**
    ```bash
+   # Optional: fetch the legacy worktree engine if you do not already have it.
    bash android/scripts/fetch-yggsync.sh
+
+   # Copy/build the wrapper binary into android/bin/yggsync, then install:
    bash android/scripts/install.sh
    ```
 7. **Provide SMB credentials to Termux:**
@@ -37,9 +41,10 @@ This setup script will:
 
 - check Termux prerequisites and storage access
 - create `~/.config/ygg_sync.toml` from the Android template if missing
+- create `~/.config/yggsync.runtime.toml` from the runtime template if missing
 - install the boot wrapper under `~/.termux/boot/`
 - copy widget and dynamic shortcuts from `android/shortcuts/`
-- register the fast and bulk jobs with `termux-job-scheduler`
+- register the obsidian and bulk jobs through `yggsync android install-jobs`
 - optionally run an initial Obsidian `worktree` sync
 
 ## Battery Settings
@@ -54,15 +59,15 @@ Without this, Android will eventually kill the background jobs.
 ## How It Works
 
 - [`android/scripts/bootstrap.sh`](/home/user/gh/yggclient/android/scripts/bootstrap.sh): installs required Termux packages and requests storage access
-- [`android/scripts/install.sh`](/home/user/gh/yggclient/android/scripts/install.sh): installs the fetched `yggsync` binary into `~/.local/bin`
+- [`android/scripts/install.sh`](/home/user/gh/yggclient/android/scripts/install.sh): installs the wrapper/core binaries, boot hook, and shortcuts
 - [`android/scripts/setup-android-sync.sh`](/home/user/gh/yggclient/android/scripts/setup-android-sync.sh): configures boot, shortcuts, and scheduling
-- [`android/scripts/sync-yggsync-fast.sh`](/home/user/gh/yggclient/android/scripts/sync-yggsync-fast.sh): runs fast notes and Obsidian jobs conservatively
-- [`android/scripts/sync-yggsync-bulk.sh`](/home/user/gh/yggclient/android/scripts/sync-yggsync-bulk.sh): runs slower media/archive jobs
+- [`android/scripts/fetch-yggsync.sh`](/home/user/gh/yggclient/android/scripts/fetch-yggsync.sh): fetches the legacy `yggsync-core` build when needed
 - [`android/scripts/update-public-stack.sh`](/home/user/gh/yggclient/android/scripts/update-public-stack.sh): optional boot-time repo and binary refresh
-- [`android/scripts/termux-boot-sync-jobs.sh`](/home/user/gh/yggclient/android/scripts/termux-boot-sync-jobs.sh): re-registers jobs after boot
+- [`android/scripts/termux-boot-sync-jobs.sh`](/home/user/gh/yggclient/android/scripts/termux-boot-sync-jobs.sh): re-registers jobs after boot via `yggsync`
 
-The compatibility-named shortcut `sync-obsidian-resync` now runs native `worktree` sync.
-It no longer triggers `rclone bisync` recovery flags.
+Obsidian is now a first-class `yggsync` command/profile rather than being hidden inside the generic `fast` lane.
+The compatibility-named shortcut `sync-obsidian-resync` uses that dedicated command.
+Bulk uploads now default to a `500 MiB` cellular cap per run. Use the `sync-yggsync-bulk-force` shortcut only when you explicitly want to override that protection for one run.
 
 ## Updating
 
@@ -81,11 +86,12 @@ bash android/scripts/setup-android-sync.sh
 
 ## Troubleshooting
 
-- Fast job log: `cat ~/.local/state/ygg_client/sync-yggsync-fast.log`
-- Bulk job log: `cat ~/.local/state/ygg_client/sync-yggsync-bulk.log`
+- Obsidian job log: `cat ~/.local/state/yggsync/obsidian.log`
+- Bulk job log: `cat ~/.local/state/yggsync/bulk.log`
+- Manual shortcut logs: `cat ~/.local/state/yggsync/manual-obsidian.log`, `cat ~/.local/state/yggsync/manual-bulk.log`, and `cat ~/.local/state/yggsync/manual-bulk-force.log`
 - Boot log: `cat ~/.local/state/ygg_client/termux-boot.log`
 - Job status: `termux-job-scheduler --print`
-- Manual fast run: `bash ~/gh/yggclient/android/scripts/sync-yggsync-fast.sh`
+- Manual Obsidian run: `bash ~/gh/yggclient/android/shortcuts/sync-obsidian-resync`
 - Manual boot registration: `bash ~/gh/yggclient/android/scripts/termux-boot-sync-jobs.sh`
 - Stale lock: if no `yggsync` process is alive, remove the lock file configured in `~/.config/ygg_sync.toml`
 

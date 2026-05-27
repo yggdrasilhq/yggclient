@@ -203,9 +203,9 @@ done
 # pushd / popd is safer if there were more complex operations after.
 original_dir=$(pwd)
 
-log_message "Executing: ${LEGO_EXEC_PATH} ${lego_args[*]} run"
+log_message "Executing: ${LEGO_EXEC_PATH} run ${lego_args[*]}"
 
-if ! timeout --foreground "${LEGO_RUN_TIMEOUT_SECONDS}" "${LEGO_EXEC_PATH}" "${lego_args[@]}" run; then
+if ! timeout --foreground "${LEGO_RUN_TIMEOUT_SECONDS}" "${LEGO_EXEC_PATH}" run "${lego_args[@]}"; then
     rc=$?
     if [[ "$rc" -eq 124 ]]; then
         log_message "ERROR: Lego 'run' timed out after ${LEGO_RUN_TIMEOUT_SECONDS}s. This prevents long-lived ACME retry sleeps from wedging the systemd unit."

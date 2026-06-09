@@ -60,7 +60,7 @@ if ! [ -f "$PRIVKEY_FILE" ]; then echo "Herald: FATAL - Private key file not fou
 echo "Herald: Reading TRUE CONTENT from $PRIVKEY_FILE..."
 
 # THE TRUE INCANTATION: Use command substitution to embed the file's content.
-infisical "${INFISICAL_DOMAIN_ARGS[@]}" secrets set --env="$INFISICAL_ENV" --projectId="$INFISICAL_PROJECT_ID" --token="$INFISICAL_TOKEN" "$SECRET_NAME_PRIVKEY=$(cat "$PRIVKEY_FILE")"
+infisical "${INFISICAL_DOMAIN_ARGS[@]}" secrets set --env="$INFISICAL_ENV" --projectId="$INFISICAL_PROJECT_ID" --token="$INFISICAL_TOKEN" "$SECRET_NAME_PRIVKEY=$(cat "$PRIVKEY_FILE")" >/dev/null
 if [ $? -ne 0 ]; then echo "Herald: FATAL - Failed to upload private key." >&2; exit 1; fi
 echo "Herald: Private key content uploaded successfully."
 
@@ -70,7 +70,7 @@ if ! [ -f "$FULLCHAIN_FILE" ]; then echo "Herald: FATAL - Full chain file not fo
 echo "Herald: Reading TRUE CONTENT from $FULLCHAIN_FILE..."
 
 # THE TRUE INCANTATION:
-infisical "${INFISICAL_DOMAIN_ARGS[@]}" secrets set --env="$INFISICAL_ENV" --projectId="$INFISICAL_PROJECT_ID" --token="$INFISICAL_TOKEN" "$SECRET_NAME_FULLCHAIN=$(cat "$FULLCHAIN_FILE")"
+infisical "${INFISICAL_DOMAIN_ARGS[@]}" secrets set --env="$INFISICAL_ENV" --projectId="$INFISICAL_PROJECT_ID" --token="$INFISICAL_TOKEN" "$SECRET_NAME_FULLCHAIN=$(cat "$FULLCHAIN_FILE")" >/dev/null
 if [ $? -ne 0 ]; then echo "Herald: FATAL - Failed to upload full chain." >&2; exit 1; fi
 echo "Herald: Full chain content uploaded successfully."
 

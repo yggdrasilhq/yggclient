@@ -36,6 +36,9 @@ LEGO_EXEC_PATH="${LEGO_INSTALL_DIR}/${LEGO_EXEC_NAME}"
 DNS_RESOLVERS="${LEGO_DNS_RESOLVERS:-1.1.1.1:53,8.8.8.8:53}"
 NGINX_RELOAD_COMMAND="${NGINX_RELOAD_COMMAND:-systemctl reload nginx}"
 LEGO_RUN_TIMEOUT_SECONDS="${LEGO_RUN_TIMEOUT_SECONDS:-1800}"
+LEGO_ARI_DISABLE="${LEGO_ARI_DISABLE:-true}"
+LEGO_NO_RANDOM_SLEEP="${LEGO_NO_RANDOM_SLEEP:-false}"
+LEGO_RENEW_DAYS="${LEGO_RENEW_DAYS:-}"
 
 if [[ "$LEGO_DNS_PROVIDER" == "porkbun" ]]; then
     : "${PORKBUN_SECRET_API_KEY:?PORKBUN_SECRET_API_KEY is required for porkbun}"
@@ -198,6 +201,18 @@ for domain in "${DOMAINS_TO_CERTIFY[@]}"; do
     lego_args+=("--domains=${domain}")
 done
 
+if [[ "${LEGO_ARI_DISABLE}" == "true" ]]; then
+    lego_args+=("--ari-disable")
+fi
+
+if [[ "${LEGO_NO_RANDOM_SLEEP}" == "true" ]]; then
+    lego_args+=("--no-random-sleep")
+fi
+
+if [[ -n "${LEGO_RENEW_DAYS}" ]]; then
+    lego_args+=("--renew-days=${LEGO_RENEW_DAYS}")
+fi
+
 # Store the current directory to return to it later if needed,
 # though for this script, it's the last major operation.
 # pushd / popd is safer if there were more complex operations after.
@@ -205,8 +220,12 @@ original_dir=$(pwd)
 
 log_message "Executing: ${LEGO_EXEC_PATH} run ${lego_args[*]}"
 
-if ! timeout --foreground "${LEGO_RUN_TIMEOUT_SECONDS}" "${LEGO_EXEC_PATH}" run "${lego_args[@]}"; then
-    rc=$?
+set +e
+timeout --foreground "${LEGO_RUN_TIMEOUT_SECONDS}" "${LEGO_EXEC_PATH}" run "${lego_args[@]}"
+rc=$?
+set -e
+
+if [[ "$rc" -ne 0 ]]; then
     if [[ "$rc" -eq 124 ]]; then
         log_message "ERROR: Lego 'run' timed out after ${LEGO_RUN_TIMEOUT_SECONDS}s. This prevents long-lived ACME retry sleeps from wedging the systemd unit."
     else

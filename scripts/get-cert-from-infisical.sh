@@ -86,6 +86,32 @@ validate_pem_file() {
 validate_pem_file "$TMP_PRIVKEY" "private key" "-----BEGIN .*PRIVATE KEY-----"
 validate_pem_file "$TMP_FULLCHAIN" "full chain" "-----BEGIN CERTIFICATE-----"
 
+# --- Pair & validity verification (fail closed) ---
+# 2026-06-12 incident: the vault briefly held a fullchain from an older renewal
+# than the privkey. Both payloads were valid PEM, so the format check above
+# passed, the mismatched pair was deployed, and every TLS handshake failed
+# with a bad CertificateVerify signature (took gour.top mail down). Never
+# deploy material whose public keys don't match or whose leaf is expired.
+KEY_PUB=$(openssl pkey -in "$TMP_PRIVKEY" -pubout 2>/dev/null) || {
+    echo "Keeper: FATAL - private key payload is not parseable by openssl. Refusing deployment." >&2
+    exit 1
+}
+CERT_PUB=$(openssl x509 -in "$TMP_FULLCHAIN" -pubkey -noout 2>/dev/null) || {
+    echo "Keeper: FATAL - full chain payload is not parseable by openssl. Refusing deployment." >&2
+    exit 1
+}
+if [[ "$KEY_PUB" != "$CERT_PUB" ]]; then
+    echo "Keeper: FATAL - private key does not match the certificate in the vault (key/cert from different renewals?). Refusing deployment." >&2
+    openssl x509 -in "$TMP_FULLCHAIN" -noout -subject -dates >&2 || true
+    exit 1
+fi
+if ! openssl x509 -in "$TMP_FULLCHAIN" -checkend 86400 >/dev/null; then
+    echo "Keeper: FATAL - vault certificate is expired or expires within 24h. Refusing to deploy stale material." >&2
+    openssl x509 -in "$TMP_FULLCHAIN" -noout -dates >&2 || true
+    exit 1
+fi
+echo "Keeper: Key/certificate pair verified (public keys match, cert valid)."
+
 # --- Idempotency Check & Deployment (This logic remains sound) ---
 NEEDS_UPDATE=0
 if ! [ -f "$PRIVKEY_PATH" ] || ! diff -q "$PRIVKEY_PATH" "$TMP_PRIVKEY" >/dev/null; then NEEDS_UPDATE=1; fi

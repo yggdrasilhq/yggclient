@@ -54,9 +54,37 @@ DOMAIN_UPPER=$(echo "$DOMAIN" | tr '.-' '_' | tr '[:lower:]' '[:upper:]')
 SECRET_NAME_PRIVKEY="LETSENCRYPT_${DOMAIN_UPPER}_PRIVKEY"
 SECRET_NAME_FULLCHAIN="LETSENCRYPT_${DOMAIN_UPPER}_FULLCHAIN"
 
-# --- Upload Private Key ---
+# --- Pair & validity verification (fail closed) ---
+# 2026-06-12 incident: the vault ended up holding a fullchain and privkey from
+# different renewals; the consumer deployed the mismatched pair and gour.top
+# mail TLS broke. The vault must only ever receive a verified matching pair,
+# so verify BEFORE the first write — the two `secrets set` calls below are not
+# atomic, and aborting between them is what leaves the vault mixed.
 PRIVKEY_FILE="$LE_CERTS_PATH/$DOMAIN.key"
+FULLCHAIN_FILE="$LE_CERTS_PATH/$DOMAIN.fullchain.pem"
 if ! [ -f "$PRIVKEY_FILE" ]; then echo "Herald: FATAL - Private key file not found!" >&2; exit 1; fi
+if ! [ -f "$FULLCHAIN_FILE" ]; then echo "Herald: FATAL - Full chain file not found!" >&2; exit 1; fi
+KEY_PUB=$(openssl pkey -in "$PRIVKEY_FILE" -pubout 2>/dev/null) || {
+    echo "Herald: FATAL - $PRIVKEY_FILE is not a parseable private key. Refusing upload." >&2
+    exit 1
+}
+CERT_PUB=$(openssl x509 -in "$FULLCHAIN_FILE" -pubkey -noout 2>/dev/null) || {
+    echo "Herald: FATAL - $FULLCHAIN_FILE is not a parseable certificate. Refusing upload." >&2
+    exit 1
+}
+if [[ "$KEY_PUB" != "$CERT_PUB" ]]; then
+    echo "Herald: FATAL - $PRIVKEY_FILE does not match $FULLCHAIN_FILE (different renewals?). Refusing to poison the vault." >&2
+    openssl x509 -in "$FULLCHAIN_FILE" -noout -subject -dates >&2 || true
+    exit 1
+fi
+if ! openssl x509 -in "$FULLCHAIN_FILE" -checkend 86400 >/dev/null; then
+    echo "Herald: FATAL - $FULLCHAIN_FILE is expired or expires within 24h. Refusing to upload stale material." >&2
+    openssl x509 -in "$FULLCHAIN_FILE" -noout -dates >&2 || true
+    exit 1
+fi
+echo "Herald: Key/certificate pair verified (public keys match, cert valid)."
+
+# --- Upload Private Key ---
 echo "Herald: Reading TRUE CONTENT from $PRIVKEY_FILE..."
 
 # THE TRUE INCANTATION: Use command substitution to embed the file's content.
@@ -65,8 +93,6 @@ if [ $? -ne 0 ]; then echo "Herald: FATAL - Failed to upload private key." >&2; 
 echo "Herald: Private key content uploaded successfully."
 
 # --- Upload Full Chain Certificate ---
-FULLCHAIN_FILE="$LE_CERTS_PATH/$DOMAIN.fullchain.pem"
-if ! [ -f "$FULLCHAIN_FILE" ]; then echo "Herald: FATAL - Full chain file not found!" >&2; exit 1; fi
 echo "Herald: Reading TRUE CONTENT from $FULLCHAIN_FILE..."
 
 # THE TRUE INCANTATION:

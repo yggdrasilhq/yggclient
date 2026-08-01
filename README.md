@@ -353,3 +353,19 @@ Without `yggclient`, every laptop and phone would need hand-rolled wrappers for:
 - platform-specific behavior
 
 That is the exact operational burden this repo removes.
+
+## License
+
+- Code: **GPL-3.0-or-later**, full text in `LICENSE`
+- Documentation: **CC BY-SA 4.0**, see `LICENSE-CC-BY-SA-4.0`
+- Names and logos: neither licence covers them — see `TRADEMARKS.md`
+
+Copyright 2026 Avikalpa Kundu <avi@gour.top>.
+
+Ygg Client was Apache-2.0 until 2026-08-01. Anything published under that licence stays
+available under it; everything from the relicensing commit onward is
+GPL-3.0-or-later.
+
+Contributions need a signed CLA, because this project is also licensed
+commercially. See `CONTRIBUTING.md` and `CLA.md` — it is a page, you keep your
+copyright, and it takes one line to sign.

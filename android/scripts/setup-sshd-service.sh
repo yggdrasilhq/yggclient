@@ -291,12 +291,30 @@ if [ -f "$LOG" ] && [ "$(wc -c < "$LOG" 2>/dev/null || echo 0)" -gt 262144 ]; th
 fi
 log() { printf '%s [%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$TRIGGER" "$*" >> "$LOG"; }
 
-listening() { timeout 3 bash -c "exec 3<>/dev/tcp/127.0.0.1/$PORT" 2>/dev/null; }
+# ⛔ A TCP ACCEPT IS NOT A WORKING sshd, and the difference has already cost a
+# remote phone. Since OpenSSH 9.8 the listener execs libexec/sshd-session for
+# every connection. Upgrade openssh under a running listener and the old binary
+# in memory starts exec'ing the NEW helper from disk: the port still accepts,
+# and every connection dies at kex_exchange_identification. Measured on a phone
+# in exactly that state - `exec 3<>/dev/tcp/host/8022` succeeded while the
+# banner read returned nothing. So health means "sent me an SSH- banner", never
+# "accepted my connection".
+port_open() { timeout 3 bash -c "exec 3<>/dev/tcp/127.0.0.1/$PORT" 2>/dev/null; }
 
-wait_listening() {
+banner() {
+    timeout 6 bash -c "
+        exec 3<>/dev/tcp/127.0.0.1/$PORT 2>/dev/null || exit 1
+        read -t 4 -r line <&3 || exit 1
+        printf '%s' \"\$line\"
+    " 2>/dev/null
+}
+
+healthy() { case "$(banner)" in SSH-*) return 0 ;; *) return 1 ;; esac; }
+
+wait_healthy() {
     i=0
-    while [ "$i" -lt "${1:-15}" ]; do
-        listening && return 0
+    while [ "$i" -lt "${1:-20}" ]; do
+        healthy && return 0
         sleep 1
         i=$((i + 1))
     done
@@ -333,11 +351,29 @@ if [ -e "$SVDIR/$SERVICE/down" ]; then
     fi
 fi
 
-# --- 3. bring it up ---------------------------------------------------------
+# --- 3. a listener that accepts but does not speak SSH is broken -----------
+# This is the apt case above all: at DPkg::Post-Invoke time the old listener is
+# still in memory with a new sshd-session on disk, so catching it here is what
+# stops an openssh upgrade from stranding a phone nobody can reach.
 
-if listening; then
+if port_open && ! healthy; then
+    log "WARNING: port $PORT accepts but sends no SSH banner - the listener is broken"
     if running_under_runit; then
-        log "ok: runit owns $SERVICE, port $PORT listening"
+        log "restarting the supervised $SERVICE (its binary was probably replaced under it)"
+        sv restart "$SERVICE" >/dev/null 2>&1
+    else
+        log "killing the broken unsupervised listener"
+        command -v pkill >/dev/null 2>&1 && pkill -x sshd 2>/dev/null
+        sv up "$SERVICE" >/dev/null 2>&1
+    fi
+    sleep 3
+fi
+
+# --- 4. bring it up ---------------------------------------------------------
+
+if healthy; then
+    if running_under_runit; then
+        log "ok: runit owns $SERVICE, port $PORT healthy ($(banner))"
         exit 0
     fi
     # Something answers but runit is not it: an unsupervised sshd, hand-started
@@ -361,18 +397,20 @@ if listening; then
 fi
 
 sv up "$SERVICE" >/dev/null 2>&1
-if wait_listening 15 && running_under_runit; then
-    log "ok: $SERVICE up under runit, port $PORT listening"
+if wait_healthy 20 && running_under_runit; then
+    log "ok: $SERVICE up under runit, port $PORT healthy ($(banner))"
     exit 0
 fi
 
-# --- 4. last resort ---------------------------------------------------------
+# --- 5. last resort ---------------------------------------------------------
 # Never leave the phone with no route in. A bare sshd is not boot-persistent,
 # but it beats no sshd, and the next trigger will try runit again.
 
-log "WARNING: runit did not deliver port $PORT (state: $(sv_state)) - starting a bare sshd"
+log "WARNING: runit did not deliver a healthy $PORT (state: $(sv_state)) - starting a bare sshd"
+command -v pkill >/dev/null 2>&1 && pkill -x sshd 2>/dev/null
+sleep 1
 sshd >>"$LOG" 2>&1
-if wait_listening 10; then
+if wait_healthy 15; then
     log "ok: bare sshd listening on $PORT - NOT supervised, see $LOGDIR/sv/$SERVICE/current"
     exit 0
 fi
@@ -457,11 +495,16 @@ fi
 echo
 echo "=== result ==="
 SVDIR="$PREFIX/var/service" sv status sshd 2>&1 || warn "sv status sshd failed"
-if timeout 3 bash -c "exec 3<>/dev/tcp/127.0.0.1/$PORT" 2>/dev/null; then
-    echo "ok: sshd is listening on $PORT"
-else
-    warn "nothing is listening on $PORT - check $PREFIX/var/log/sv/sshd/current"
-fi
+# Read the banner, not just the accept - see the note in ygg-sshd-ensure.
+RESULT_BANNER="$(timeout 6 bash -c "
+    exec 3<>/dev/tcp/127.0.0.1/$PORT 2>/dev/null || exit 1
+    read -t 4 -r line <&3 || exit 1
+    printf '%s' \"\$line\"" 2>/dev/null)"
+case "$RESULT_BANNER" in
+    SSH-*) echo "ok: sshd is healthy on $PORT ($RESULT_BANNER)" ;;
+    "")    warn "nothing usable on $PORT - check $PREFIX/var/log/sv/sshd/current" ;;
+    *)     warn "$PORT answered but not with an SSH banner: $RESULT_BANNER" ;;
+esac
 echo "--- last enforcement log lines ---"
 tail -5 "$HOME/.local/state/ygg_client/sshd-ensure.log" 2>/dev/null
 

@@ -1,0 +1,20 @@
+[Unit]
+Description=Check the TLS certificates actually served on the wire
+After=network-online.target nss-lookup.target
+
+[Service]
+Type=oneshot
+User=root
+
+# The endpoint list is private, so it lives outside this repo. See
+# scripts/cert-sentinel.sh for the variables this file must define.
+#
+# Choose the vantage point deliberately: a host that a mail server lists in
+# server.listener.*.proxy.trusted-networks must speak PROXY protocol, so a
+# plain TLS probe from it is reset and the sentinel goes blind on exactly the
+# ports that host fronts. Probe from somewhere that is just an ordinary client.
+EnvironmentFile=/etc/ygg/cert-sentinel.env
+ExecStart=/usr/local/sbin/cert-sentinel.sh
+
+[Install]
+WantedBy=timers.target

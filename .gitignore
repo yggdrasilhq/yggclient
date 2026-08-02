@@ -1,11 +1,14 @@
 # Ignore built binaries for Android helper tools
 android/bin/yggsync
 
-# Local private profile
-config/profiles.local.env
-config/certs.local.env
-yggclient.local.toml
-scripts/lego/lego.local.env
+# Local private profile. The globs matter as much as the names: hand-editing
+# these files leaves a .local.env.bak-<date> beside them, and those backups
+# hold the same live API tokens while matching none of the bare paths. This
+# repo is public.
+config/profiles.local.env*
+config/certs.local.env*
+yggclient.local.toml*
+scripts/lego/lego.local.env*
 
 # editor/system
 .DS_Store

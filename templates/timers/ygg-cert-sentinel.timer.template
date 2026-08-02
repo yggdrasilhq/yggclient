@@ -1,0 +1,15 @@
+[Unit]
+Description=Timer for the served-certificate sentinel
+
+[Timer]
+# Daily, and shortly after boot. The renewal path runs nightly; this runs
+# after it so a deploy that failed to reload is caught within a day rather
+# than at expiry.
+OnBootSec=10min
+OnCalendar=*-*-* 07:20
+RandomizedDelaySec=20min
+AccuracySec=5min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

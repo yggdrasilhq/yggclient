@@ -193,6 +193,43 @@ bash android/scripts/setup-android-sync.sh
 ~/.local/bin/yggsync -config ~/.config/ygg_sync.toml -jobs screenshots -dry-run
 ```
 
+### Android Reachable Over SSH
+
+To drive a phone from a workstation, give it a boot-persistent, key-only sshd.
+Put the workstation key and the CIDRs it may connect from in
+`~/.config/ygg_client.env` (see `android/config/ygg_client.env.example`), then
+run this in Termux:
+
+```bash
+bash android/scripts/setup-sshd-service.sh
+```
+
+Re-run it any time; it is idempotent. On a phone that is already set up and
+only needs the persistence layer refreshed, `--persist-only` skips the package,
+key, and `sshd_config` steps and is safe to run over ssh:
+
+```bash
+bash android/scripts/setup-sshd-service.sh --persist-only
+```
+
+Enabling the service is not enough on its own, and this is the failure it
+exists to prevent: `sv-enable sshd` works by deleting
+`$PREFIX/var/service/sshd/down`, but that file ships **with the openssh
+package** and is not a dpkg conffile, so every `pkg upgrade` restores it. From
+then on the phone boots with sshd supervised-but-down and nothing can log in
+until somebody opens Termux by hand. The script therefore installs one
+enforcement routine, `~/.local/bin/ygg-sshd-ensure`, and drives it from three
+independent triggers: the Termux:Boot hook, an apt post-invoke hook, and a
+persisted `termux-job-scheduler` watchdog. Its decisions are logged to
+`~/.local/state/ygg_client/sshd-ensure.log`, which is the first place to look
+when a phone is unreachable.
+
+Two settings still need hands on the handset, and no script can do them:
+Termux, Termux:API, and Termux:Boot need Battery set to **Unrestricted**, and a
+phone that must be reachable off the LAN needs its VPN app set to
+**always-on** - a boot-persistent sshd on an unreachable address is still an
+unreachable phone.
+
 ## Normal Operation
 
 ### Desktop

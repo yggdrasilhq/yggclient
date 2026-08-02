@@ -31,7 +31,7 @@ self_update() {
   else
     echo "irun update: New version found. Installing..." >&2
     chmod +x "/tmp/irun.new" && mv "/tmp/irun.new" "$0"
-    echo "irun update: Update complete. Please run your command again to use the new version." >&2
+    echo "irun update: Update complete. Please run your command again to use the new script." >&2
     exit 0 # Exit so the user can re-run with the new script
   fi
 
@@ -45,7 +45,7 @@ if [[ "$1" == "--update" ]]; then
   self_update
 fi
 
-if ! [ -f "$UPDATE_CHECK_FILE" ] || [ "$(($(date +%s) - $(stat -c %Y "$UPDATE_CHECK_FILE")))" -gt "$UPDATE_TTL" ]; then
+if ! [ -f "$UPDATE_CHECK_FILE" ] || [ "$(( $(date +%s) - $(stat -c %Y "$UPDATE_CHECK_FILE") ))" -gt "$UPDATE_TTL" ]; then
   # This triggers the update check once per hour
   self_update
 fi
@@ -76,10 +76,13 @@ if ! [[ " ${infisical_flags[@]} " =~ " --projectId " ]] && [ -n "$INFISICAL_PROJ
 elif ! [[ " ${infisical_flags[@]} " =~ " --projectId " ]]; then
   echo "irun Error: INFISICAL_PROJECT_ID not set and --projectId flag was not provided." >&2; exit 1
 fi
+if ! [[ " ${infisical_flags[@]} " =~ " --domain " ]] && [ -n "$INFISICAL_API_URL" ]; then
+  infisical_flags+=(--domain "$INFISICAL_API_URL")
+fi
 
 # --- 4. Construct the Generic Dynamic Logic (CORRECTED) ---
 # This engine now uses process substitution to avoid the subshell trap.
-selector_logic=$(cat <<'EOF'
+selector_logic=$(cat <<'EOF2'
 # This logic is executed by the child bash shell after secrets are injected.
 # The 'while' loop runs in the current shell, so 'export' works as expected.
 while IFS='=' read -r selector_var_name selector_var_value; do
@@ -91,7 +94,7 @@ while IFS='=' read -r selector_var_name selector_var_value; do
   fi
 
 done < <(printenv | grep '^ACTIVE_')
-EOF
+EOF2
 )
 
 # --- 5. Build and Execute the Final Command Chain ---

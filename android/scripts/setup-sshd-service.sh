@@ -291,6 +291,21 @@ if [ -f "$LOG" ] && [ "$(wc -c < "$LOG" 2>/dev/null || echo 0)" -gt 262144 ]; th
 fi
 log() { printf '%s [%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$TRIGGER" "$*" >> "$LOG"; }
 
+# Triggers overlap in practice: the 15-minute watchdog fires while an apt run
+# or a manual converge is already in flight. Two concurrent handovers race -
+# one `pkill -x sshd` can kill the sshd the other just started. Observed live
+# on a phone where [manual] and [watchdog] both handed the port over in the
+# same second. Serialize them; a trigger that cannot take the lock has nothing
+# to add, because the holder is asserting the very same state.
+LOCK="$HOME/.local/state/ygg_client/sshd-ensure.lock"
+if command -v flock >/dev/null 2>&1; then
+    exec 9>"$LOCK" 2>/dev/null || true
+    if ! flock -w 45 9 2>/dev/null; then
+        log "another trigger holds the lock - it is asserting the same state, exiting"
+        exit 0
+    fi
+fi
+
 # ⛔ A TCP ACCEPT IS NOT A WORKING sshd, and the difference has already cost a
 # remote phone. Since OpenSSH 9.8 the listener execs libexec/sshd-session for
 # every connection. Upgrade openssh under a running listener and the old binary

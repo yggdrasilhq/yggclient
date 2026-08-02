@@ -4,14 +4,21 @@
 # We used to serve a private mirror of the kmonad repo purely to host one build
 # artifact. That mirror is gone: upstream publishes a static Linux binary on
 # every release, so there is nothing for us to keep in sync and no stale fork to
-# explain. Pin KMONAD_VERSION rather than tracking "latest" so two machines
-# provisioned a month apart end up with the same binary.
+# explain. Track latest by default and ride upstream; set KMONAD_VERSION to pin
+# a specific tag when reproducing a machine.
 
 set -euo pipefail
 
-KMONAD_VERSION="${KMONAD_VERSION:-0.4.5}"
+KMONAD_VERSION="${KMONAD_VERSION:-latest}"
 install_location="${KMONAD_INSTALL_DIR:-${HOME}/.local/bin}"
-url="https://github.com/kmonad/kmonad/releases/download/${KMONAD_VERSION}/kmonad"
+
+# GitHub serves /releases/latest/download/<asset> as a redirect to the newest
+# release, so tracking latest needs no API call and no token.
+if [ "$KMONAD_VERSION" = "latest" ]; then
+  url="https://github.com/kmonad/kmonad/releases/latest/download/kmonad"
+else
+  url="https://github.com/kmonad/kmonad/releases/download/${KMONAD_VERSION}/kmonad"
+fi
 
 mkdir -p "$install_location"
 
@@ -36,7 +43,7 @@ mv "$tmp" "$install_location/kmonad"
 trap - EXIT
 
 echo
-echo "kmonad ${KMONAD_VERSION} downloaded from github.com/kmonad/kmonad"
+echo "kmonad (${KMONAD_VERSION}) downloaded from github.com/kmonad/kmonad"
 echo "It is installed at $install_location/kmonad"
 echo
 echo "It is not required to be added in path as the systemd service"

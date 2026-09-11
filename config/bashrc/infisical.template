@@ -2,22 +2,36 @@
 
 # Private values should come from config/profiles.local.env (gitignored),
 # or be pre-exported in the shell environment.
-if [ -z "${INFISICAL_API_URL:-}" ] && [ -n "${SECRETS_API_URL:-}" ]; then
+
+# Shipped placeholder values (see config/profiles.example.env) count as
+# UNCONFIGURED: normalize them to unset so the emptiness guard below skips
+# silently instead of firing the loader at the example endpoint. Measured
+# 2026-09-11 on jojo: an emptiness-only guard let the placeholders through,
+# printing "Unable to fetch secrets" on every terminal open. (Semantics from
+# the 2026-07-01 draft, which sat at config/ level and was never sourced.)
+is_placeholder_infisical_value() {
+  case "${1:-}" in
+    ""|https://secrets.example|replace-with-project-id|replace-with-machine-token|replace-with-infra-project-id|replace-with-infra-machine-token)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+# A real SECRETS_API_URL rescues a placeholder INFISICAL_API_URL.
+if is_placeholder_infisical_value "${INFISICAL_API_URL:-}" && ! is_placeholder_infisical_value "${SECRETS_API_URL:-}"; then
   export INFISICAL_API_URL="$SECRETS_API_URL"
 fi
+if is_placeholder_infisical_value "${INFISICAL_API_URL:-}"; then unset INFISICAL_API_URL; fi
+if is_placeholder_infisical_value "${INFISICAL_PROJECT_ID:-}"; then unset INFISICAL_PROJECT_ID; fi
+if is_placeholder_infisical_value "${INFISICAL_TOKEN:-}"; then unset INFISICAL_TOKEN; fi
+unset -f is_placeholder_infisical_value
 
 if [ -z "${INFISICAL_PROJECT_ID:-}" ] || [ -z "${INFISICAL_TOKEN:-}" ] || [ -z "${INFISICAL_API_URL:-}" ]; then
   return 0
 fi
-
-# The committed profiles.example.env ships placeholder values (secrets.example,
-# replace-with-*). A host that has not overridden them via profiles.local.env is
-# UNCONFIGURED: skip silently instead of firing the loader at the example
-# endpoint (measured 2026-09-11 on jojo: hourly "Unable to fetch secrets" on
-# every terminal open).
-case "${INFISICAL_API_URL}" in *example*) return 0 ;; esac
-case "${INFISICAL_PROJECT_ID}" in replace-with-*) return 0 ;; esac
-case "${INFISICAL_TOKEN}" in replace-with-*) return 0 ;; esac
 
 # ---- Load Secrets from Infisical (with Caching & The Generic 'iexport' Tool) ----
 #

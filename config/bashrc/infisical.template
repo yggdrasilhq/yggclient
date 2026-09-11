@@ -10,6 +10,15 @@ if [ -z "${INFISICAL_PROJECT_ID:-}" ] || [ -z "${INFISICAL_TOKEN:-}" ] || [ -z "
   return 0
 fi
 
+# The committed profiles.example.env ships placeholder values (secrets.example,
+# replace-with-*). A host that has not overridden them via profiles.local.env is
+# UNCONFIGURED: skip silently instead of firing the loader at the example
+# endpoint (measured 2026-09-11 on jojo: hourly "Unable to fetch secrets" on
+# every terminal open).
+case "${INFISICAL_API_URL}" in *example*) return 0 ;; esac
+case "${INFISICAL_PROJECT_ID}" in replace-with-*) return 0 ;; esac
+case "${INFISICAL_TOKEN}" in replace-with-*) return 0 ;; esac
+
 # ---- Load Secrets from Infisical (with Caching & The Generic 'iexport' Tool) ----
 #
 # This is the definitive setup for an interactive shell. It uses our
@@ -32,8 +41,14 @@ else
   #echo "Refreshing secrets from Infisical..." >&2 # Message to stderr
   
   # 'iexport' produces the perfect 'export KEY=VALUE' output for our cache file.
-  iexport > "$INFISICAL_CACHE_FILE"
-  
+  # A failed refresh must NOT become a fresh cache (that masks the outage for a
+  # full TTL and surfaces the error only on the next hour's terminal open).
+  if ! iexport > "$INFISICAL_CACHE_FILE"; then
+    rm -f "$INFISICAL_CACHE_FILE"
+    echo "infisical.template: secret refresh failed; continuing without secrets" >&2
+    return 0
+  fi
+
   # Load the secrets from the newly created cache file.
   source "$INFISICAL_CACHE_FILE"
 fi

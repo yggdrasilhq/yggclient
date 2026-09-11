@@ -5,7 +5,7 @@
 # and prints the final, complete set of 'export' commands to standard output,
 # ready to be consumed by `eval`.
 
-set -e
+set -eo pipefail
 
 # --- Safety Checks ---
 # This script relies on the standard environment variables being set,

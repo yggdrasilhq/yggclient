@@ -10,14 +10,27 @@ set -eo pipefail
 # --- Safety Checks ---
 # This script relies on the standard environment variables being set,
 # typically in the calling shell's .bashrc or the LXC config.
-if [ -z "$INFISICAL_TOKEN" ]; then
-  echo "iexport Error: INFISICAL_TOKEN environment variable is not set." >&2; exit 1;
-fi
 if [ -z "$INFISICAL_PROJECT_ID" ]; then
   echo "iexport Error: INFISICAL_PROJECT_ID environment variable is not set." >&2; exit 1;
 fi
 if [ -z "$INFISICAL_API_URL" ]; then
   echo "iexport Error: INFISICAL_API_URL environment variable is not set." >&2; exit 1;
+fi
+
+# --- 0. Universal-auth identities: exchange client credentials for an access
+# token in-memory, so profiles.local.env never stores an expiring token.
+if [ -z "${INFISICAL_TOKEN:-}" ] && [ -n "${INFISICAL_CLIENT_ID:-}" ] && [ -n "${INFISICAL_CLIENT_SECRET:-}" ]; then
+  INFISICAL_TOKEN=$(curl -s --max-time 20 "${INFISICAL_API_URL%/}/api/v1/auth/universal-auth/login" \
+    -H 'Content-Type: application/json' \
+    -d "{\"clientId\":\"$INFISICAL_CLIENT_ID\",\"clientSecret\":\"$INFISICAL_CLIENT_SECRET\"}" \
+    | jq -r '.accessToken // empty')
+  if [ -z "$INFISICAL_TOKEN" ]; then
+    echo "iexport Error: universal-auth exchange failed (check INFISICAL_CLIENT_ID/SECRET)." >&2; exit 1;
+  fi
+  export INFISICAL_TOKEN
+fi
+if [ -z "${INFISICAL_TOKEN:-}" ]; then
+  echo "iexport Error: set INFISICAL_TOKEN or INFISICAL_CLIENT_ID+INFISICAL_CLIENT_SECRET." >&2; exit 1;
 fi
 
 INFISICAL_DOMAIN_ARGS=()

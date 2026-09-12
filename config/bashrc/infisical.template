@@ -11,7 +11,7 @@
 # the 2026-07-01 draft, which sat at config/ level and was never sourced.)
 is_placeholder_infisical_value() {
   case "${1:-}" in
-    ""|https://secrets.example|replace-with-project-id|replace-with-machine-token|replace-with-infra-project-id|replace-with-infra-machine-token)
+    ""|https://secrets.example|replace-with-project-id|replace-with-machine-token|replace-with-infra-project-id|replace-with-infra-machine-token|replace-with-client-id|replace-with-client-secret)
       return 0
       ;;
     *)
@@ -27,9 +27,18 @@ fi
 if is_placeholder_infisical_value "${INFISICAL_API_URL:-}"; then unset INFISICAL_API_URL; fi
 if is_placeholder_infisical_value "${INFISICAL_PROJECT_ID:-}"; then unset INFISICAL_PROJECT_ID; fi
 if is_placeholder_infisical_value "${INFISICAL_TOKEN:-}"; then unset INFISICAL_TOKEN; fi
+if is_placeholder_infisical_value "${INFISICAL_CLIENT_ID:-}"; then unset INFISICAL_CLIENT_ID; fi
+if is_placeholder_infisical_value "${INFISICAL_CLIENT_SECRET:-}"; then unset INFISICAL_CLIENT_SECRET; fi
 unset -f is_placeholder_infisical_value
 
-if [ -z "${INFISICAL_PROJECT_ID:-}" ] || [ -z "${INFISICAL_TOKEN:-}" ] || [ -z "${INFISICAL_API_URL:-}" ]; then
+# Configured means: a machine token, OR universal-auth client credentials
+# (iexport exchanges those for a short-lived token itself — nothing expiring
+# is ever stored on disk).
+INFISICAL_HAS_TOKEN=0
+if [ -n "${INFISICAL_TOKEN:-}" ] || { [ -n "${INFISICAL_CLIENT_ID:-}" ] && [ -n "${INFISICAL_CLIENT_SECRET:-}" ]; }; then
+  INFISICAL_HAS_TOKEN=1
+fi
+if [ "$INFISICAL_HAS_TOKEN" -ne 1 ] || [ -z "${INFISICAL_PROJECT_ID:-}" ] || [ -z "${INFISICAL_API_URL:-}" ]; then
   return 0
 fi
 

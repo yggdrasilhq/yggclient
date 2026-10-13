@@ -26,8 +26,19 @@ run_cmd() {
   "$@"
 }
 
+# Newest shift-* snapshot on a dataset, local or remote ("": none).
+newest_shift_snap_local() {
+  zfs list -H -t snapshot -o name -s creation -d1 "$1" 2>/dev/null \
+    | awk -F'@' -v ds="$1" -v p="$SNAPSHOT_PREFIX" '$1==ds && index($2,p"-")==1 {last=$2} END{print last}'
+}
+
+newest_shift_snap_remote() {
+  ssh -n "${SSH_ARGS[@]}" "$REMOTE" zfs list -H -t snapshot -o name -s creation -d1 "$1" 2>/dev/null \
+    | awk -F'@' -v ds="$1" -v p="$SNAPSHOT_PREFIX" '$1==ds && index($2,p"-")==1 {last=$2} END{print last}'
+}
+
 prune_local_dataset() {
-  local dataset="$1" keep="$2"
+  local dataset="$1" keep="$2" floor="${3:-}"
   local -a snaps=()
   local s
   if ! zfs list -H -o name "$dataset" >/dev/null 2>&1; then
@@ -41,6 +52,23 @@ prune_local_dataset() {
     return 0
   fi
   local remove_count=$((count - keep))
+  # Never prune at-or-past the newest snapshot the destination still holds:
+  # deleting the remote's incremental base is what turns one missed sync into
+  # a full re-send (the Sep->Oct jojo->manin home stall).
+  if [[ -n "$floor" ]]; then
+    local fi_ floor_idx=-1
+    for fi_ in "${!snaps[@]}"; do
+      [[ "${snaps[$fi_]}" == "$floor" ]] && floor_idx=$fi_
+    done
+    if (( floor_idx >= 0 && remove_count > floor_idx )); then
+      log "Local ${dataset}: capping prune at remote base ${floor} (wanted ${remove_count}, capping at ${floor_idx})"
+      remove_count=$floor_idx
+    fi
+  fi
+  if (( remove_count <= 0 )); then
+    log "Local ${dataset}: nothing to prune after base cap"
+    return 0
+  fi
   log "Local ${dataset}: pruning ${remove_count} old snapshots (keep ${keep})"
   local i
   for ((i=0; i<remove_count; i++)); do
@@ -50,7 +78,7 @@ prune_local_dataset() {
 }
 
 prune_remote_dataset() {
-  local dataset="$1" keep="$2"
+  local dataset="$1" keep="$2" floor="${3:-}"
   local -a snaps=()
   local s
   if ! ssh -n "${SSH_ARGS[@]}" "$REMOTE" zfs list -H -o name "$dataset" >/dev/null 2>&1; then
@@ -64,6 +92,20 @@ prune_remote_dataset() {
     return 0
   fi
   local remove_count=$((count - keep))
+  if [[ -n "$floor" ]]; then
+    local fi_ floor_idx=-1
+    for fi_ in "${!snaps[@]}"; do
+      [[ "${snaps[$fi_]}" == "$floor" ]] && floor_idx=$fi_
+    done
+    if (( floor_idx >= 0 && remove_count > floor_idx )); then
+      log "Remote ${dataset}: capping prune at local base ${floor} (wanted ${remove_count}, capping at ${floor_idx})"
+      remove_count=$floor_idx
+    fi
+  fi
+  if (( remove_count <= 0 )); then
+    log "Remote ${dataset}: nothing to prune after base cap"
+    return 0
+  fi
   log "Remote ${dataset}: pruning ${remove_count} old snapshots (keep ${keep})"
   local i
   for ((i=0; i<remove_count; i++)); do
@@ -136,13 +178,15 @@ while IFS= read -r map_line; do
   if [[ "$ACTION" == "push" ]]; then
     local_ds="$src"
     remote_ds="$dst"
+    # Source side never prunes past the destination's newest received snapshot.
+    [[ "$PRUNE_LOCAL" == "1" ]] && prune_local_dataset "$local_ds" "$PRUNE_KEEP_LOCAL" "$(newest_shift_snap_remote "$remote_ds")"
+    [[ "$PRUNE_REMOTE" == "1" ]] && prune_remote_dataset "$remote_ds" "$PRUNE_KEEP_REMOTE"
   else
     local_ds="$dst"
     remote_ds="$src"
+    [[ "$PRUNE_LOCAL" == "1" ]] && prune_local_dataset "$local_ds" "$PRUNE_KEEP_LOCAL"
+    [[ "$PRUNE_REMOTE" == "1" ]] && prune_remote_dataset "$remote_ds" "$PRUNE_KEEP_REMOTE" "$(newest_shift_snap_local "$local_ds")"
   fi
-
-  [[ "$PRUNE_LOCAL" == "1" ]] && prune_local_dataset "$local_ds" "$PRUNE_KEEP_LOCAL"
-  [[ "$PRUNE_REMOTE" == "1" ]] && prune_remote_dataset "$remote_ds" "$PRUNE_KEEP_REMOTE"
 
 done <<< "$MAP_INPUT"
 

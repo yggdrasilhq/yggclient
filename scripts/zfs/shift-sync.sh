@@ -37,7 +37,7 @@ Environment overrides:
   SHIFT_SSH_OPTS,
   SHIFT_ALLOW_LIVE_RECV,
   SHIFT_MODE, SHIFT_SNAPSHOT_PREFIX, SHIFT_SEND_FLAGS, SHIFT_RECV_FLAGS,
-  SHIFT_RECURSIVE, SHIFT_DRY_RUN
+  SHIFT_RECURSIVE, SHIFT_DRY_RUN, SHIFT_AUTO_RECONCILE
 
 Examples:
   sudo scripts/zfs/shift-sync.sh push --identity client-a --src rpool/ROOT/debian --dst zfs/lxc/client-a/ROOT/debian
@@ -221,6 +221,7 @@ SSH_OPTS="${SHIFT_SSH_OPTS:-}"
 ALLOW_LIVE_RECV="${SHIFT_ALLOW_LIVE_RECV:-0}"
 RECURSIVE="${SHIFT_RECURSIVE:-1}"
 DRY_RUN="${SHIFT_DRY_RUN:-0}"
+AUTO_RECONCILE="${SHIFT_AUTO_RECONCILE:-0}"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -353,6 +354,30 @@ replicate_pair() {
           die "No common ${SNAPSHOT_PREFIX}-* snapshot found for incremental send (${SRC_DATASET})"
         fi
         log "No common ${SNAPSHOT_PREFIX}-* snapshot found; falling back to full send"
+
+        # A full send refuses to overwrite a destination that still holds
+        # snapshots. When local retention has pruned past everything the
+        # remote received (stale remote), that condition never heals by
+        # itself and every run fails the same way. Reconcile: destroy the
+        # stale remote snapshots so the full send can land.
+        if [[ "$AUTO_RECONCILE" == "1" ]]; then
+          local -a stale_snaps=()
+          mapfile -t stale_snaps < <(list_snapshots_remote "$DST_DATASET" 2>/dev/null | grep "^${SNAPSHOT_PREFIX}-" || true)
+          if (( ${#stale_snaps[@]} > 0 )); then
+            log "Reconcile: destroying ${#stale_snaps[@]} stale remote ${SNAPSHOT_PREFIX}-* snapshot(s) on ${DST_DATASET} (no common base with local)"
+            local stale_snap
+            for stale_snap in "${stale_snaps[@]}"; do
+              run_cmd ssh -n "${SSH_ARGS[@]}" "$REMOTE" zfs destroy "${DST_DATASET}@${stale_snap}" \
+                || run_cmd ssh -n "${SSH_ARGS[@]}" "$REMOTE" zfs destroy -R "${DST_DATASET}@${stale_snap}"
+            done
+          fi
+        else
+          local stale_count
+          stale_count="$(list_snapshots_remote "$DST_DATASET" 2>/dev/null | grep -c "^${SNAPSHOT_PREFIX}-" || true)"
+          if (( stale_count > 0 )); then
+            die "Remote ${DST_DATASET} holds ${stale_count} stale ${SNAPSHOT_PREFIX}-* snapshot(s) with no common base; a full send cannot overwrite them. Destroy them manually or set SHIFT_AUTO_RECONCILE=1."
+          fi
+        fi
       fi
     fi
 
